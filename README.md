@@ -31,4 +31,27 @@ Possible syntax are given below. In case of widl card or [], it is necessary to 
 --file_path "$PATH/data/auger/TD/td002022_f000*.root"
 ```
 
+- plot_path is the main folder where the plots will be stored.
+If a single file is given in file_path then the plots will be stored in 
+$file_path/basename_of_the_file. For example
+```
+large_scale_diagostic.py  --file_path $PATH/data/auger/TD/td002022_f0001.root --plot_path ./plots/run2022
+```
+will save plots in a folder ./plots/run2022/td002022_f0001.
+If file_path corresponds to more than one file, then the basename of the file is ill-defined and the user can specify the desired name in the base parameters.
+Is base is unspecified then the plots will be in $plot_path/many_files. Examples:
+```
+large_scale_diagostic.py  --file_path $PATH/data/auger/TD/td002022_f000*.root --plot_path ./plots/run2022 
+```
+will save plots in ./plots/run2022/mane_files, where as 
+```
+large_scale_diagostic.py  --file_path $PATH/data/auger/TD/td002022_f000*.root --plot_path ./plots/run2022 --base all_files
+```
+will save plots in ./plots/run2022/all_files.
+
+
+- site is a requeried parameter that indicates if the root files are from GP13 or GRAND@Auger. Must be either gaa or gp13.
+
+- do_fourier_vs_time is a boolean (True or False) to produce the Fourier vs time plots. Those are long and memory heavy to produce, especially for many files, so it is False by default.
+
 
