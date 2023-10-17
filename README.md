@@ -54,7 +54,7 @@ will save plots in ./plots/run2022/all_files.
 
 
 ### site
-is a requeried parameter that indicates if the root files are from GP13 or GRAND@Auger. Must be either gaa or gp13.
+is a required parameter that indicates if the root files are from GP13 or GRAND@Auger. Must be either gaa or gp13.
 
 ### do_fourier_vs_time
 is a boolean (True or False) to produce the Fourier vs time plots. Those are long and memory heavy to produce, especially for many files, so it is False by default.
