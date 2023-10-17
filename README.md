@@ -22,7 +22,9 @@ large_scale_diagostic.py  --file_path FILE_PATH --plot_path PLOT_PATH --site SIT
 ```
 
 
-- file_path is the path of ther root files to analyse. It is fed to glob in the code so that it ios possible to analyse several files of a same run.
+# file_path 
+
+is the path of ther root files to analyse. It is fed to glob in the code so that it ios possible to analyse several files of a same run.
 Possible syntax are given below. In case of widl card or [], it is necessary to use quotes. 
 
 ```
@@ -31,7 +33,8 @@ Possible syntax are given below. In case of widl card or [], it is necessary to 
 --file_path "$PATH/data/auger/TD/td002022_f000*.root"
 ```
 
-- plot_path is the main folder where the plots will be stored.
+# plot_path
+ is the main folder where the plots will be stored.
 If a single file is given in file_path then the plots will be stored in 
 $file_path/basename_of_the_file. For example
 ```
@@ -50,8 +53,10 @@ large_scale_diagostic.py  --file_path $PATH/data/auger/TD/td002022_f000*.root --
 will save plots in ./plots/run2022/all_files.
 
 
-- site is a requeried parameter that indicates if the root files are from GP13 or GRAND@Auger. Must be either gaa or gp13.
+# site
+is a requeried parameter that indicates if the root files are from GP13 or GRAND@Auger. Must be either gaa or gp13.
 
-- do_fourier_vs_time is a boolean (True or False) to produce the Fourier vs time plots. Those are long and memory heavy to produce, especially for many files, so it is False by default.
+# do_fourier_vs_time
+is a boolean (True or False) to produce the Fourier vs time plots. Those are long and memory heavy to produce, especially for many files, so it is False by default.
 
 
