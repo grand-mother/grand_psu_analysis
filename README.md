@@ -21,8 +21,8 @@ The command is
 large_scale_diagostic.py  --file_path FILE_PATH --plot_path PLOT_PATH --site SITE [--do_fourier_vs_time DO_FOURIER_VS_TIME] [--base BASE]
 ```
 
-```
-file_path``` is the path of ther root files to analyse. It is fed to glob in the code so that it ios possible to analyse several files of a same run.
+
+- file_path is the path of ther root files to analyse. It is fed to glob in the code so that it ios possible to analyse several files of a same run.
 Possible syntax are given below. In case of widl card or [], it is necessary to use quotes. 
 
 ```
