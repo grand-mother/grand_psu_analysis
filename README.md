@@ -18,7 +18,7 @@ The directory tools contains command-line scripts that can use to perform quick 
 The only file to run is tools/large_scale_diagnostic.py
 The command is
 ```
-large_scale_diagostic.py  --file_path FILE_PATH --plot_path PLOT_PATH --site SITE [--do_fourier_vs_time DO_FOURIER_VS_TIME] [--base BASE]
+large_scale_diagostic.py  --file_path FILE_PATH --plot_path PLOT_PATH --site SITE [--do_fourier_vs_time DO_FOURIER_VS_TIME]  [--du_list DU_LIST [DU_LIST ...]] [--base BASE]
 ```
 
 
