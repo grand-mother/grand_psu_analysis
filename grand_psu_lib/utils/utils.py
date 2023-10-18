@@ -266,7 +266,7 @@ def make_joint_plot(
         #ax2.plot(dtime_sec_bl, bl_)
         ax2.set_ylabel(right_ylabel) 
         ax2.plot(date_right_axis_qty, right_axis_qty, '-')
-
+    ax2.grid()
     for label in axs.get_xticklabels(which='major'):
         label.set(rotation=30, horizontalalignment='right')
     plt.title(plt_title)
@@ -346,7 +346,7 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
 
     request = 'trace_ch'
     for du_number in du_list:
-        result, time_secdu, dtime_sec_du = get_column_for_given_du(tadc, request, du_number, tz=tz)
+        result, time_secdu, dtime_sec_du = get_column_for_given_du(tadc, request, du_number, tz=TZ_GMT())
         #result, time_secdu, dtime_sec_du, bl_du, duid_du = ua.get_column_for_given_du(tadc, request, du_number)
         traces_np = result[:, 0, 0:3].to_numpy()
 
@@ -369,15 +369,14 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
             fft_timei = np.fft.rfft(traces_np_timei)
             psd_timei = np.abs(fft_timei**2)
             if n_traces > 0:
-            #print (psd_timei.mean(axis=0)[0], len(idx))
                 plt.figure(fig_num, figsize=(15, 15))
-                #plt.plot(psd_timei.mean(axis=0)[0], label='ch x, time bin {}'.format(i))
+                
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[0], label='{} <t< {}'.format(
                     datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
                     datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
                 )
                 plt.figure(fig_num+1, figsize=(15, 15))
-                #plt.plot(fft_freq, psd_timei.mean(axis=0)[1], label='ch y, time bin {}'.format(i))
+                
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[1], label='{}<t< {}'.format(
                     datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
                     datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
@@ -388,7 +387,7 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
                     datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
                     datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
                 )
-                #  plt.plot(fft_freq, psd_timei.mean(axis=0)[2], label='ch z, time bin {}'.format(i))
+                
             
         plt.figure(fig_num)
         
@@ -427,9 +426,13 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
         plt.close()
 
 
-def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path):
+def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ_GP13()):
 
-    du_list = get_dulist(tadc)
+    if du_list is None:
+        du_list = get_dulist(tadc)
+    else:
+        du_list = du_list
+
 
     duid = tadc.du_id.to_numpy()
     gps_time = tadc.gps_time.to_numpy().squeeze()
@@ -446,7 +449,7 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path):
         idd = np.where(duid == du_number)[0]
        
         time_secdu = gps_time[idd]
-        dtime_sec_du = [datetime.datetime.fromtimestamp(dt) for dt in time_secdu]
+        dtime_sec_du = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in time_secdu]
 
         #        result, time_secdu, dtime_sec_du = get_column_for_given_du(tadc, request, du_number)
         #result, time_secdu, dtime_sec_du, bl_du, duid_du = ua.get_column_for_given_du(tadc, request, du_number)
@@ -472,32 +475,28 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path):
             fft_timei = np.fft.rfft(traces_np_timei)
             psd_timei = np.abs(fft_timei**2)
             if n_traces > 0:
-            #print (psd_timei.mean(axis=0)[0], len(idx))
                 plt.figure(fig_num, figsize=(15, 15))
-                #plt.plot(psd_timei.mean(axis=0)[0], label='ch x, time bin {}'.format(i))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[0], label='{} <t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider).strftime("%d %b_%Hh%M"))
+                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
+                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
                 )
                 plt.figure(fig_num+1, figsize=(15, 15))
-                #plt.plot(fft_freq, psd_timei.mean(axis=0)[1], label='ch y, time bin {}'.format(i))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[1], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider).strftime("%d %b_%Hh%M"))
+                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
+                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
                 )
             
                 plt.figure(fig_num+2, figsize=(15, 15))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[2], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider).strftime("%d %b_%Hh%M"))
+                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
+                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
                 )
-                #  plt.plot(fft_freq, psd_timei.mean(axis=0)[2], label='ch z, time bin {}'.format(i))
                 plt.figure(fig_num+3, figsize=(15, 15))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[3], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider).strftime("%d %b_%Hh%M"))
+                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
+                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
                 )
-                #  plt.plot(fft_freq, psd_timei.mean(axis=0)[2], label='ch z, time bin {}'.format(i))
+
             
         plt.figure(fig_num)
         
@@ -535,8 +534,6 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path):
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chZ.png".format( du_number)))
         plt.close()
 
-
- 
         plt.figure(fig_num+3)
         
         plt.title('du {} ch. W'.format(du_number))
@@ -555,8 +552,10 @@ def plot_fourier_vs_time(traces_array, date_array, fft_freq, longitude, plot_tit
 
     tz_gmt = TZ_GMT()
 
+    figsize_y = np.int32(traces_array.shape[0]/6/60/24*5) + 10
+
     fft = np.fft.rfft(traces_array)
-    fig, axs = plt.subplots(figsize=figsize)
+    fig, axs = plt.subplots(figsize=(20, figsize_y))
     axs.yaxis.set_major_locator(mdates.HourLocator(interval=4, tz=tz))
     axs.yaxis.set_major_formatter(mdates.DateFormatter('%m/%d %Hh%M', tz=tz))
 
@@ -593,8 +592,7 @@ def plot_fourier_vs_time(traces_array, date_array, fft_freq, longitude, plot_tit
     for label in ax2.get_yticklabels(which='major'):
         label.set(rotation=30, verticalalignment='bottom')
 
-    fig.colorbar(c, orientation='horizontal', label='PSD [units]', pad=0.10)
-
+    
     axs.set_ylabel('Time [{}]'.format(tz.tzname()))
     axs.set_title(plot_title)
     if plot_lines:
@@ -612,5 +610,8 @@ def plot_fourier_vs_time(traces_array, date_array, fft_freq, longitude, plot_tit
         axs.axvline(f4, color='k', ls=(0, (5, 10)))
         axs.axvline(TV_transmitter, color='m', ls=(0, (5, 10)))
         axs.axvline(TV_audio_carrier, color='m', ls=(0, (5, 10)))
+
+    plt.tight_layout()
+    fig.colorbar(c, orientation='horizontal', label='PSD [units]', pad=0.10)
 
     plt.savefig(plot_filename, dpi=500)

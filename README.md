@@ -59,4 +59,9 @@ is a required parameter that indicates if the root files are from GP13 or GRAND@
 ### do_fourier_vs_time
 is a boolean (True or False) to produce the Fourier vs time plots. Those are long and memory heavy to produce, especially for many files, so it is False by default.
 
+### du_list
+can be used top limit the du used in the analysis.
+```
+large_scale_diagostic.py  ... --du_list 84 151
+```
 

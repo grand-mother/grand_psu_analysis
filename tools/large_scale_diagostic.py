@@ -1,3 +1,5 @@
+import sys
+sys.path.append('./')
 import uproot
 import numpy as np
 import matplotlib.dates as mdates
@@ -7,6 +9,7 @@ import grand_psu_lib.utils.utils as utils
 import argparse
 import glob
 import datetime
+
 
 def str2bool(s):
     if s.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -46,6 +49,13 @@ def parse_args():
         help="only plot masks [False]"
     )
     ap.add_argument(
+        "--du_list",
+        nargs="+",
+        default=None,
+        type=int,
+        help="input DU list"
+    )
+    ap.add_argument(
         "--base",
         type=str,
         default='many_files',
@@ -62,7 +72,6 @@ if __name__ == "__main__":
     if ((site != 'gaa') and (site != 'gp13')):
         print('site must be either gaa or gp13')    
         exit()
-
 
     file_str = args.file_path
 
@@ -81,8 +90,6 @@ if __name__ == "__main__":
     else:
         base = args.base
 
-
-
     plot_path = os.path.join(args.plot_path, '{}'.format(base))
     trace_plot_path = os.path.join(plot_path, 'random_traces_and_their_spectra')
 
@@ -93,9 +100,12 @@ if __name__ == "__main__":
     tadc = uproot.concatenate(file_dict_tadc)
     trawv = uproot.concatenate(file_dict_trawv)
 
-    du_list = utils.get_dulist(tadc)
 
-
+    if args.du_list is None:
+        du_list = utils.get_dulist(tadc)
+    else:
+        du_list = args.du_list
+        
 
     # The following lines are hard coded. To be modified if those parameter vary
 
@@ -132,13 +142,14 @@ if __name__ == "__main__":
         request = "battery_level"
 
         fig, axs = plt.subplots()
-        axs.xaxis.set_major_locator(mdates.HourLocator(interval=4, tz=tz))
+        axs.xaxis.set_major_locator(mdates.HourLocator(interval=1, tz=tz))
         axs.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %Hh%M', tz=tz))
 
         for idx in du_list:
             if site == 'gaa':
                 bl_, time_sec_, dtime_sec_ = utils.get_column_for_given_du(trawv, request, idx, tz=tz_gmt)
                 axs.plot(dtime_sec_, bl_, '.', ms='2', label='du{}'.format(idx))
+                axs.grid()
                 
             if site == 'gp13':
                 idd = np.where(duid == idx)[0]
@@ -154,7 +165,7 @@ if __name__ == "__main__":
 
         plt.legend(loc=0, ncol=2)
         plt.title(request)
-        plt.xlabel('Time [{}]'.format(tz_gmt.tzname()))
+        plt.xlabel('Time [{}]'.format(tz.tzname()))
         plt.ylabel('Battery level [V]')
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, '{}_batterylevel_vs_time.png'.format(base)))
@@ -164,9 +175,9 @@ if __name__ == "__main__":
     # TO DO: checke the tz for the times slices. 
     nb_time_slices = 4
     if site == 'gaa':
-        utils.plot_mean_psd_time_sliced(tadc, nb_time_slices, plot_path)
+        utils.plot_mean_psd_time_sliced(tadc, nb_time_slices, plot_path, du_list=du_list)
     if site == 'gp13':
-        utils.plot_mean_psd_time_sliced_gp13(tadc, nb_time_slices, plot_path)
+        utils.plot_mean_psd_time_sliced_gp13(tadc, nb_time_slices, plot_path, du_list=du_list)
 
 
 
@@ -190,7 +201,7 @@ if __name__ == "__main__":
                 date_idx = [datetime.datetime.fromtimestamp(dt, tz=tz_gmt) for dt in gps_ti_idx]
                 bl_idx = battery_level[idd]
                 gps_temp_idx = gps_temp[idd]
-                traces_np = tadc.trace_ch.to_numpy()[idd, 0, 1:3]
+                traces_np = tadc.trace_ch.to_numpy()[idd, 0, 1:4]
                 #traces_np4d = tadc.trace_ch.to_numpy()[idd, 0, 0:4]
                 date_array = date_idx
                 plot_lines = False
@@ -202,9 +213,9 @@ if __name__ == "__main__":
                     id_ch = i+1 
                         
                 plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch{}.png'.format(idx, id_ch))  #    'toto3.png'
-                traces_array = traces_np[:, 0]
+                traces_array = traces_np[:, i]
                     
-                gps_lon, _, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx, tz=tz)
+                gps_lon, _, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx, tz=tz_gmt)
                 plot_title = 'DU{} {} channel {}'.format(idx, base, id_ch)
                 utils.plot_fourier_vs_time(
                     traces_array,
@@ -216,40 +227,6 @@ if __name__ == "__main__":
                     tz=tz,
                     figsize=(10, 8), plot_lines=plot_lines
                 )
-
-            # plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch1.png'.format(idx))  #    'toto3.png'
-            # traces_array = traces_np[:, 1]
-            
-            # gps_lon, _, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx, tz=tz)
-            # plot_title = 'DU{} {} channel 1'.format(idx, base)
-            # utils.plot_fourier_vs_time(
-            #     traces_array,
-            #     date_array,
-            #     fft_freq,
-            #     gps_lon[0][0] / 180 * np.pi,
-            #     plot_title,
-            #     plot_filename,
-            #     tz=tz,
-            #     figsize=(10, 8), plot_lines=True
-            # )
-
-            # plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch2.png'.format(idx))  #    'toto3.png'
-            # traces_array = traces_np[:, 2]
-            
-            # gps_lon, _, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx, tz=tz)
-            # plot_title = 'DU{} {} channel 2'.format(idx, base)
-            # utils.plot_fourier_vs_time(
-            #     traces_array,
-            #     date_array,
-            #     fft_freq,
-            #     gps_lon[0][0] / 180 * np.pi,
-            #     plot_title,
-            #     plot_filename,
-            #     tz=tz,
-            #     figsize=(10, 8), plot_lines=True
-            # )
-
-
 
     for idx in du_list:
         if site == 'gaa':
@@ -341,8 +318,3 @@ if __name__ == "__main__":
                 title = '{}, event #{}, DU {}'.format(base, tadc.event_number[idd_], idx)
                 save_path = os.path.join(trace_plot_path, 'trace_event{}_du{}.png'.format(tadc.event_number[idd_], idx))
                 utils.plot_trace_and_psd4d(traces_np4d[idd_], title, save_path, tadc_or_voltage='tadc')
-
-
-
-        
-       
