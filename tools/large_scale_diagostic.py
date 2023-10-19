@@ -310,11 +310,12 @@ if __name__ == "__main__":
             bl_idx = battery_level[idd]
             gps_temp_idx = gps_temp[idd]
 
-            nb_events = traces_np.shape[0]
-            idxs = np.random.permutation(nb_events)[0:20]
             traces_np4d = tadc.trace_ch.to_numpy()[idd, 0, 0:4]
+            nb_events = traces_np4d.shape[0]
+            idxs = np.random.permutation(nb_events)[0:20]
 
             for idd_ in idxs:
-                title = '{}, event #{}, DU {}'.format(base, tadc.event_number[idd_], idx)
+                title = '{},\n event #{}, DU {}'.format(base, tadc.event_number[idd_], idx)
+                title += ' date {}'.format(datetime.datetime.fromtimestamp(gps_ti_idx[idd_], tz=tz).strftime("%d-%m-%Y %Hh%Mm%Ss"))
                 save_path = os.path.join(trace_plot_path, 'trace_event{}_du{}.png'.format(tadc.event_number[idd_], idx))
                 utils.plot_trace_and_psd4d(traces_np4d[idd_], title, save_path, tadc_or_voltage='tadc')
