@@ -110,9 +110,22 @@ def plot_trace_and_psd(trace, title, save_path, tadc_or_voltage='voltage'):
     # Remove vertical space between axes
     fig.subplots_adjust(hspace=0)
 
-    axs[0, 0].plot(trace[0], label='x, std {}'.format(trace[0].std()))
-    axs[1, 0].plot(trace[1], label='y, std {}'.format(trace[1].std()))
-    axs[2, 0].plot(trace[2], label='z, std {}'.format(trace[2].std()))
+    sig_x = trace[0].std()
+    sig_y = trace[1].std()
+    sig_z = trace[2].std()
+
+    axs[0, 0].plot(trace[0], label='x, std {}'.format(sig_x))
+    axs[1, 0].plot(trace[1], label='y, std {}'.format(sig_y))
+    axs[2, 0].plot(trace[2], label='z, std {}'.format(sig_z))
+
+    axs[0, 0].plot(trace[0]*0 + sig_x, 'r-')
+    axs[1, 0].plot(trace[1]*0 + sig_y, 'r-')
+    axs[2, 0].plot(trace[2]*0 + sig_z, 'r-')
+
+    axs[0, 0].plot(trace[0]*0 + 3*sig_x, 'r:')
+    axs[1, 0].plot(trace[1]*0 + 3*sig_y, 'r:')
+    axs[2, 0].plot(trace[2]*0 + 3*sig_z, 'r:')
+
 
     axs[0, 0].legend(loc=1)
     axs[1, 0].legend(loc=1)
@@ -156,10 +169,25 @@ def plot_trace_and_psd4d(trace, title, save_path, tadc_or_voltage='voltage'):
     # Remove vertical space between axes
     fig.subplots_adjust(hspace=0)
 
-    axs[0, 0].plot(trace[0], label='ch0, std {}'.format(trace[0].std()))
-    axs[1, 0].plot(trace[1], label='ch1, std {}'.format(trace[1].std()))
-    axs[2, 0].plot(trace[2], label='ch2, std {}'.format(trace[2].std()))
-    axs[3, 0].plot(trace[3], label='ch3, std {}'.format(trace[3].std()))
+    sig_x = trace[0].std()
+    sig_y = trace[1].std()
+    sig_z = trace[2].std()
+    sig_w = trace[3].std()
+
+    axs[0, 0].plot(trace[0], label='ch0, std {}'.format(sig_x))
+    axs[1, 0].plot(trace[1], label='ch1, std {}'.format(sig_y))
+    axs[2, 0].plot(trace[2], label='ch2, std {}'.format(sig_z))
+    axs[3, 0].plot(trace[3], label='ch3, std {}'.format(sig_w))
+
+    axs[0, 0].plot(trace[0]*0 + sig_x, 'r-')
+    axs[1, 0].plot(trace[1]*0 + sig_y, 'r-')
+    axs[2, 0].plot(trace[2]*0 + sig_z, 'r-')
+    axs[3, 0].plot(trace[2]*0 + sig_w, 'r-')
+
+    axs[0, 0].plot(trace[0]*0 + 3*sig_x, 'r:')
+    axs[1, 0].plot(trace[1]*0 + 3*sig_y, 'r:')
+    axs[2, 0].plot(trace[2]*0 + 3*sig_z, 'r:')
+    axs[3, 0].plot(trace[2]*0 + 3*sig_w, 'r:')
 
 
     axs[0, 0].legend(loc=1)
