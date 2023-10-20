@@ -105,17 +105,14 @@ if __name__ == "__main__":
         du_list = utils.get_dulist(tadc)
     else:
         du_list = args.du_list
-        
 
     # The following lines are hard coded. To be modified if those parameter vary
 
     sample_freq = 500   # [MHz]
     sample_period = 1/sample_freq # [us]
 
-
     n_samples = len(tadc.trace_ch[0][0][0])
     fft_freq = np.fft.rfftfreq(n_samples) * sample_freq  # [MHz]
-
 
     tz_gmt = utils.TZ_GMT()
     tz_auger = utils.TZ_auger()
@@ -144,15 +141,15 @@ if __name__ == "__main__":
         request = "battery_level"
 
         fig, axs = plt.subplots()
-        axs.xaxis.set_major_locator(mdates.HourLocator(interval=1, tz=tz))
+        axs.xaxis.set_major_locator(mdates.HourLocator(interval=4, tz=tz))
         axs.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %Hh%M', tz=tz))
 
         for idx in du_list:
             if site == 'gaa':
-                bl_, time_sec_, dtime_sec_ = utils.get_column_for_given_du(trawv, request, idx, tz=tz_gmt)
-                axs.plot(dtime_sec_, bl_, '.', ms='2', label='du{}'.format(idx))
+                bl_, date_array = utils.get_column_for_given_du(trawv, request, idx)
+                axs.plot(date_array, bl_, '.', ms='2', label='du{}'.format(idx))
                 axs.grid()
-                
+  
             if site == 'gp13':
                 idd = np.where(duid == idx)[0]
                 gps_ti_idx = gps_time[idd]
@@ -160,7 +157,6 @@ if __name__ == "__main__":
                 bl_idx = battery_level[idd]
                 gps_temp_idx = gps_temp[idd]
                 axs.plot(date_idx, bl_idx, '.', ms='2', label='du{}'.format(idx))
-        
 
         for label in axs.get_xticklabels(which='major'):
             label.set(rotation=30, horizontalalignment='right')
@@ -189,7 +185,7 @@ if __name__ == "__main__":
         for idx in du_list:
             if site == 'gaa':
                 request = 'trace_ch'
-                result, time_sec_trace, dtime_sec_trace = utils.get_column_for_given_du(tadc, request, idx, tz=tz_gmt)
+                result, date_array_trace = utils.get_column_for_given_du(tadc, request, idx)
                 traces_np = result[:, 0, 0:3].to_numpy()
                 plot_lines = True
 
@@ -208,7 +204,7 @@ if __name__ == "__main__":
                 date_array = date_idx
                 plot_lines = False
                 
-            for i  in range(0, 3):
+            for i in range(0, 3):
                 if site == 'gaa':
                     id_ch = i
                 if site == 'gp13':
@@ -217,7 +213,7 @@ if __name__ == "__main__":
                 plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch{}.png'.format(idx, id_ch))  #    'toto3.png'
                 traces_array = traces_np[:, i]
                     
-                gps_lon, _, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx, tz=tz_gmt)
+                gps_lon, _, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx)
                 plot_title = 'DU{} {} channel {}'.format(idx, base, id_ch)
                 utils.plot_fourier_vs_time(
                     traces_array,
@@ -230,85 +226,93 @@ if __name__ == "__main__":
                     figsize=(10, 8), plot_lines=plot_lines
                 )
 
+
+
+    ### plots of the mean and std vs time, with batterylevel and gps_temp
     for idx in du_list:
         if site == 'gaa':
             request = "battery_level"
-            bl_, time_sec_bl, dtime_sec_bl = utils.get_column_for_given_du(trawv, request, idx, tz=tz_gmt)
+            bl_, date_array_bl = utils.get_column_for_given_du(trawv, request, idx)
 
             request = 'trace_ch'
-            result, time_sec_trace, dtime_sec_trace = utils.get_column_for_given_du(tadc, request, idx, tz=tz_gmt)
+            result, date_array_trace = utils.get_column_for_given_du(tadc, request, idx)
             traces_np = result[:, 0, 0:3].to_numpy()
 
             request = 'gps_temp'
-            gps_temp_, time_sec_gps_temp, dtime_sec_gps_temps = utils.get_column_for_given_du(trawv, request, idx, tz=tz_gmt)
+            gps_temp_, date_array_gps_temp = utils.get_column_for_given_du(trawv, request, idx)
 
             plot_function = utils.make_joint_plot
 
         if site == 'gp13':
             idd = np.where(duid == idx)[0]
             gps_ti_idx = gps_time[idd]
-            dtime_sec_trace = [datetime.datetime.fromtimestamp(dt, tz=tz_gmt) for dt in gps_ti_idx]
+            date_array_trace = [datetime.datetime.fromtimestamp(dt, tz=tz_gmt) for dt in gps_ti_idx]
+            
             bl_ = battery_level[idd]
             gps_temp_ = gps_temp[idd]
             traces_np = tadc.trace_ch.to_numpy()[idd, 0, 0:4]
-            dtime_sec_bl = dtime_sec_trace
-            dtime_sec_gps_temps = dtime_sec_trace
+            date_array_bl = date_array_trace
+            date_array_gps_temp = date_array_trace
             plot_function = utils.make_joint_plot4d
 
         plot_filename = os.path.join(plot_path, '{}_batterylevel_trace_mean_vs_time_{}_ADC.png'.format(base, idx))
         plot_function(
-            traces_np, dtime_sec_trace,
+            traces_np, date_array_trace,
             'mean', idx,
             plot_filename,
-            right_axis_qty=bl_, date_right_axis_qty=dtime_sec_bl,
+            right_axis_qty=bl_, date_right_axis_qty=date_array_bl,
             right_ylabel='battery level [V]', tadc_or_voltage='tadc', tz=tz)
 
         plot_filename = os.path.join(plot_path, '{}_batterylevel_trace_std_vs_time_{}_ADC.png'.format(base, idx))
         plot_function(
-            traces_np, dtime_sec_trace,
+            traces_np, date_array_trace,
             'std', idx,
             plot_filename,
-            right_axis_qty=bl_, date_right_axis_qty=dtime_sec_bl,
+            right_axis_qty=bl_, date_right_axis_qty=date_array_bl,
             right_ylabel='battery level [V]', tadc_or_voltage='tadc',tz=tz
         )
 
         plot_filename = os.path.join(plot_path, '{}_gps_temp_trace_mean_vs_time_{}_ADC.png'.format(base, idx))
         plot_function(
-            traces_np, dtime_sec_trace,
+            traces_np, date_array_trace,
             'mean', idx,
             plot_filename,
-            right_axis_qty=gps_temp_, date_right_axis_qty=dtime_sec_gps_temps,
+            right_axis_qty=gps_temp_, date_right_axis_qty=date_array_gps_temp,
             right_ylabel='gps temperature [ºC]', tadc_or_voltage='tadc',tz=tz
         )
 
         plot_filename = os.path.join(plot_path, '{}_gps_temp_trace_std_vs_time_{}_ADC.png'.format(base, idx))
         plot_function(
-            traces_np, dtime_sec_trace,
+            traces_np, date_array_trace,
             'std', idx,
             plot_filename,
-            right_axis_qty=gps_temp_, date_right_axis_qty=dtime_sec_gps_temps,
+            right_axis_qty=gps_temp_, date_right_axis_qty=date_array_gps_temp,
             right_ylabel='gps temperature [ºC]', tadc_or_voltage='tadc',tz=tz
         )
+
 
     # Plots 5 random traces for eacu DU in ADC
     for idx in du_list:
 
         if site == 'gaa':
             request = 'trace_ch'
-            traces_, time_sec_, dtime_sec_ = utils.get_column_for_given_du(tadc, request, idx)
+            traces_, date_array_ = utils.get_column_for_given_du(tadc, request, idx)
+            traces_, dtime_sec_ = utils.get_column_for_given_du(tadc, request, idx)
             traces_np = traces_[:, 0, 0:3].to_numpy()
 
             nb_events = traces_np.shape[0]
-            idxs = np.random.permutation(nb_events)[0:20]
+            idxs = np.random.permutation(nb_events)[0:200]
 
             for idd in idxs:
                 title = '{}, event #{}, DU {}'.format(base, tadc.event_number[idd], idx)
+                date_for_title = date_array_[idd].astimezone(tz)
+                title += ' date {}'.format(date_for_title.strftime("%d-%m-%Y %Hh%Mm%Ss"))
                 save_path = os.path.join(trace_plot_path, 'trace_event{}_du{}.png'.format(tadc.event_number[idd], idx))
                 utils.plot_trace_and_psd(traces_np[idd], title, save_path, tadc_or_voltage='tadc')
         if site == 'gp13':
             idd = np.where(duid == idx)[0]
             gps_ti_idx = gps_time[idd]
-            date_idx = [datetime.datetime.fromtimestamp(dt, tz=tz) for dt in gps_ti_idx]
+            date_idx = [datetime.datetime.fromtimestamp(dt, tz=utils.TZ_GMT()) for dt in gps_ti_idx]
             bl_idx = battery_level[idd]
             gps_temp_idx = gps_temp[idd]
 
@@ -318,6 +322,7 @@ if __name__ == "__main__":
 
             for idd_ in idxs:
                 title = '{},\n event #{}, DU {}'.format(base, tadc.event_number[idd_], idx)
-                title += ' date {}'.format(datetime.datetime.fromtimestamp(gps_ti_idx[idd_], tz=tz).strftime("%d-%m-%Y %Hh%Mm%Ss"))
+                date_for_title = date_idx[idd_].astimezone(tz)
+                title += ' date {}'.format(date_for_title.strftime("%d-%m-%Y %Hh%Mm%Ss"))
                 save_path = os.path.join(trace_plot_path, 'trace_event{}_du{}.png'.format(tadc.event_number[idd_], idx))
                 utils.plot_trace_and_psd4d(traces_np4d[idd_], title, save_path, tadc_or_voltage='tadc')
