@@ -190,7 +190,7 @@ if __name__ == "__main__":
                 plot_lines = True
 
                 #fft = np.fft.rfft(traces_np)
-                date_array = dtime_sec_trace
+                date_array = date_array_trace 
 
             if site == 'gp13':
                 idd = np.where(duid == idx)[0]
@@ -200,20 +200,19 @@ if __name__ == "__main__":
                 bl_idx = battery_level[idd]
                 gps_temp_idx = gps_temp[idd]
                 traces_np = tadc.trace_ch.to_numpy()[idd, 0, 1:4]
-                #traces_np4d = tadc.trace_ch.to_numpy()[idd, 0, 0:4]
                 date_array = date_idx
                 plot_lines = False
-                
+
             for i in range(0, 3):
                 if site == 'gaa':
                     id_ch = i
                 if site == 'gp13':
-                    id_ch = i+1 
-                        
-                plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch{}.png'.format(idx, id_ch))  #    'toto3.png'
+                    id_ch = i+1
+
+                plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch{}.png'.format(idx, id_ch))
                 traces_array = traces_np[:, i]
-                    
-                gps_lon, _, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx)
+
+                gps_lon, _ = utils.get_column_for_given_du(trawv, 'gps_long', idx)
                 plot_title = 'DU{} {} channel {}'.format(idx, base, id_ch)
                 utils.plot_fourier_vs_time(
                     traces_array,
@@ -225,8 +224,6 @@ if __name__ == "__main__":
                     tz=tz,
                     figsize=(10, 8), plot_lines=plot_lines
                 )
-
-
 
     ### plots of the mean and std vs time, with batterylevel and gps_temp
     for idx in du_list:
