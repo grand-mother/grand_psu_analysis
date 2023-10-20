@@ -63,49 +63,43 @@ class TZ_GP13(tzinfo):
 
 
 
-def get_column_for_given_du(tadc, request, du_number, tz=TZ_GMT()):
+def get_column_for_given_du(tree_, request, du_number):
     """
     Function that extract the values of a given column for a given du.
-    Also outputs the values of time_seconds (in timestamps, and datetime)
+    Also outputs the corresponding arrays of dates.
 
-    This function aims at working both for tacd "still on disk" (in case of a signe file))
-    and the tadc stored in memory (in case of an concatenated tacd). So there is a test at the beginning
+    This function aims at working both for tacd "still on disk" (in case of a single file))
+    and the tree_ stored in memory (in case of an concatenated tacd). So there is a test at the beginning
     """
-    if type(tadc) == uproot.models.TTree.Model_TTree_v20:
-        #bl = tadc2["battery_level"].array()
-        duid = tadc["du_id"].array()
-        time_sec = tadc["time_seconds"].array()
-        requested_array = tadc[request].array()
-    
-    elif type(tadc) == ak.highlevel.Array:
-        duid = tadc["du_id"]
-        time_sec = tadc["time_seconds"]
-        requested_array = tadc[request]
+    if type(tree_) == uproot.models.TTree.Model_TTree_v20:
+        duid = tree_["du_id"].array()
+        timestamp_array = tree_["time_seconds"].array()
+        requested_array = tree_[request].array()
 
-    idx_du = duid==du_number
+    elif type(tree_) == ak.highlevel.Array:
+        duid = tree_["du_id"]
+        timestamp_array = tree_["time_seconds"]
+        requested_array = tree_[request]
+
+    idx_du = (duid == du_number)
 
     requested_array_du = requested_array[idx_du]
     idx_dupresent = ak.where(ak.sum(idx_du, axis=1))
     result = requested_array_du[idx_dupresent]
 
-    time_secdu = time_sec.to_numpy()[idx_dupresent]
-    dtime_sec_du = [datetime.datetime.fromtimestamp(dt, tz=tz) for dt in time_secdu]
+    timestamp_array_du = timestamp_array.to_numpy()[idx_dupresent]
+    date_array_du = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in timestamp_array_du]
 
-    #bl_du = bl[idx_du][idx_dupresent].to_numpy()[:, 0]
-    duid_du = duid[idx_du][idx_dupresent].to_numpy()[:, 0]  # this is just ouput for sanity check
-
-
-    return result, time_secdu, dtime_sec_du
+    return result, date_array_du
 
 
 def get_dulist(tadc):
     if type(tadc) == uproot.models.TTree.Model_TTree_v20:
         duid = tadc["du_id"].array()
-    
 
     elif type(tadc) == ak.highlevel.Array:
         duid = tadc["du_id"]
-    
+
     return np.unique(ak.flatten(duid))
 
 
@@ -335,28 +329,28 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
     else:
         du_list = du_list
 
+    # The following is just toi get the smalles and largest timestamps in the tadc
     time_sec = tadc['time_seconds'].to_numpy()
-
     time_min = time_sec.min()
     time_max = time_sec.max()
 
     delta_time = time_max - time_min
     time_divider = delta_time / nb_time_bins
 
-
     ##### make mean psd spectrums plots for each du aeraged for a given period of time
 
     request = 'trace_ch'
     for du_number in du_list:
-        result, time_secdu, dtime_sec_du = get_column_for_given_du(tadc, request, du_number, tz=TZ_GMT())
-        #result, time_secdu, dtime_sec_du, bl_du, duid_du = ua.get_column_for_given_du(tadc, request, du_number)
+        result, date_array = get_column_for_given_du(tadc, request, du_number)
         traces_np = result[:, 0, 0:3].to_numpy()
 
-        #t0 = time_secdu.min()
-        t0 = time_min
-        time_du = time_secdu - t0
+        # reconstruct the ts_array
+        ts_array_du = [d.timestamp() for d in date_array]
 
-        n_time_bin = time_du.max() // time_divider
+        t0 = time_min
+        ts_du = ts_array_du - t0
+
+        #n_time_bin = ts_du.max() // time_divider
         time_indices = []
         fig_num = du_number * 3
         plt.figure()
@@ -364,7 +358,7 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
         fft_freq = np.fft.rfftfreq(n_samples) * 500  # [MHz]
 
         for i in range(nb_time_bins):
-            idx = np.where((i*time_divider <= time_du) * (time_du < (i+1)*time_divider))[0]
+            idx = np.where((i*time_divider <= ts_du) * (ts_du < (i+1)*time_divider))[0]
             time_indices.append(idx)
 
             traces_np_timei = traces_np[time_indices[i]]
@@ -374,21 +368,27 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
             if n_traces > 0:
                 plt.figure(fig_num, figsize=(15, 15))
                 
+                bin_date_min_gmt = datetime.datetime.fromtimestamp(t0+i*time_divider, tz=TZ_GMT())
+                bin_date_max_gmt = datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=TZ_GMT())
+
+                bin_date_min_intz = bin_date_min_gmt.astimezone(tz)
+                bin_date_max_intz = bin_date_max_gmt.astimezone(tz)
+
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[0], label='{} <t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
+                    bin_date_min_intz.strftime("%d %b_%Hh%M"),
+                    bin_date_max_intz.strftime("%d %b_%Hh%M"))
                 )
                 plt.figure(fig_num+1, figsize=(15, 15))
                 
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[1], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
+                    bin_date_min_intz.strftime("%d %b_%Hh%M"),
+                    bin_date_max_intz.strftime("%d %b_%Hh%M"))
                 )
             
                 plt.figure(fig_num+2, figsize=(15, 15))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[2], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
+                    bin_date_min_intz.strftime("%d %b_%Hh%M"),
+                    bin_date_max_intz.strftime("%d %b_%Hh%M"))
                 )
                 
             
@@ -438,10 +438,9 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
     else:
         du_list = du_list
 
-
     duid = tadc.du_id.to_numpy()
     gps_time = tadc.gps_time.to_numpy().squeeze()
-    time_sec = tadc['time_seconds'].to_numpy()
+    #time_sec = tadc['time_seconds'].to_numpy()
 
     time_min = gps_time.min()
     time_max = gps_time.max()
@@ -449,30 +448,26 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
     delta_time = time_max - time_min
     time_divider = delta_time / nb_time_bins
 
-
     for du_number in du_list:
         idd = np.where(duid == du_number)[0]
        
-        time_secdu = gps_time[idd]
-        dtime_sec_du = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in time_secdu]
+        ts_array_du = gps_time[idd]
+        #dtime_sec_du = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in time_secdu]
 
-        #        result, time_secdu, dtime_sec_du = get_column_for_given_du(tadc, request, du_number)
-        #result, time_secdu, dtime_sec_du, bl_du, duid_du = ua.get_column_for_given_du(tadc, request, du_number)
-        #       traces_np = result[:, 0, 0:3].to_numpy()
         traces_np = tadc.trace_ch.to_numpy()[idd, 0, 0:4]
 
         #t0 = time_secdu.min()
         t0 = time_min
-        time_du = time_secdu - t0
+        ts_du = ts_array_du - t0
 
-        n_time_bin = time_du.max() // time_divider
+
         time_indices = []
         fig_num = du_number * 3
         plt.figure(figsize=(8, 15))
         plt.clf()
         fft_freq = np.fft.rfftfreq(n_samples) * 500  # [MHz]
         for i in range(nb_time_bins):
-            idx = np.where((i*time_divider <= time_du) * (time_du < (i+1)*time_divider))[0]
+            idx = np.where((i*time_divider <= ts_du) * (ts_du < (i+1)*time_divider))[0]
             time_indices.append(idx)
 
             traces_np_timei = traces_np[time_indices[i]]
@@ -480,31 +475,37 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
             fft_timei = np.fft.rfft(traces_np_timei)
             psd_timei = np.abs(fft_timei**2)
             if n_traces > 0:
+
+                bin_date_min_gmt = datetime.datetime.fromtimestamp(t0+i*time_divider, tz=TZ_GMT())
+                bin_date_max_gmt = datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=TZ_GMT())
+
+                bin_date_min_intz = bin_date_min_gmt.astimezone(tz)
+                bin_date_max_intz = bin_date_max_gmt.astimezone(tz)
+
                 plt.figure(fig_num, figsize=(15, 15))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[0], label='{} <t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
+                    bin_date_min_intz.strftime("%d %b_%Hh%M"),
+                    bin_date_max_intz.strftime("%d %b_%Hh%M"))
                 )
                 plt.figure(fig_num+1, figsize=(15, 15))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[1], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
+                    bin_date_min_intz.strftime("%d %b_%Hh%M"),
+                    bin_date_max_intz.strftime("%d %b_%Hh%M"))
                 )
-            
+
                 plt.figure(fig_num+2, figsize=(15, 15))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[2], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
+                    bin_date_min_intz.strftime("%d %b_%Hh%M"),
+                    bin_date_max_intz.strftime("%d %b_%Hh%M"))
                 )
                 plt.figure(fig_num+3, figsize=(15, 15))
                 plt.plot(fft_freq, psd_timei.mean(axis=0)[3], label='{}<t< {}'.format(
-                    datetime.datetime.fromtimestamp(t0+i*time_divider, tz=tz).strftime("%d %b_%Hh%M"),
-                    datetime.datetime.fromtimestamp(t0+(i+1)*time_divider, tz=tz).strftime("%d %b_%Hh%M"))
+                    bin_date_min_intz.strftime("%d %b_%Hh%M"),
+                    bin_date_max_intz.strftime("%d %b_%Hh%M"))
                 )
 
-            
         plt.figure(fig_num)
-        
+
         plt.title('du {} ch. X'.format(du_number))
         plt.yscale('log')
         plt.xlabel('Frequency [MHz]')
@@ -552,7 +553,6 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
         plt.close()
 
 
-
 def plot_fourier_vs_time(traces_array, date_array, fft_freq, longitude, plot_title, plot_filename, tz=TZ_auger(), figsize=(20, 35), plot_lines=False):
 
     tz_gmt = TZ_GMT()
@@ -597,7 +597,6 @@ def plot_fourier_vs_time(traces_array, date_array, fft_freq, longitude, plot_tit
     for label in ax2.get_yticklabels(which='major'):
         label.set(rotation=30, verticalalignment='bottom')
 
-    
     axs.set_ylabel('Time [{}]'.format(tz.tzname()))
     axs.set_title(plot_title)
     if plot_lines:
