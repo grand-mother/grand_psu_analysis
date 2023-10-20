@@ -111,7 +111,9 @@ if __name__ == "__main__":
 
     sample_freq = 500   # [MHz]
     sample_period = 1/sample_freq # [us]
-    n_samples = 1024
+
+
+    n_samples = len(tadc.trace_ch[0][0][0])
     fft_freq = np.fft.rfftfreq(n_samples) * sample_freq  # [MHz]
 
 

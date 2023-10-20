@@ -109,10 +109,9 @@ def get_dulist(tadc):
     return np.unique(ak.flatten(duid))
 
 
-
 def plot_trace_and_psd(trace, title, save_path, tadc_or_voltage='voltage'):
-
-    fft_freq = np.fft.rfftfreq(1024) * 500  # [MHz]
+    n_samples = trace.shape[1]
+    fft_freq = np.fft.rfftfreq(n_samples) * 500  # [MHz]
     fig, axs = plt.subplots(3, 2, figsize=(15, 8))
     # Remove vertical space between axes
     fig.subplots_adjust(hspace=0)
@@ -156,8 +155,9 @@ def plot_trace_and_psd(trace, title, save_path, tadc_or_voltage='voltage'):
 
 
 def plot_trace_and_psd4d(trace, title, save_path, tadc_or_voltage='voltage'):
+    n_samples = trace.shape[1]
 
-    fft_freq = np.fft.rfftfreq(1024) * 500  # [MHz]
+    fft_freq = np.fft.rfftfreq(n_samples) * 500  # [MHz]
     fig, axs = plt.subplots(4, 2, figsize=(15, 8))
     # Remove vertical space between axes
     fig.subplots_adjust(hspace=0)
@@ -328,7 +328,9 @@ def make_joint_plot4d(
 
 def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ_auger()):
 
-    if du_list == None:
+    n_samples = len(tadc.trace_ch[0][0][0])
+
+    if du_list is None:
         du_list = get_dulist(tadc)
     else:
         du_list = du_list
@@ -359,7 +361,8 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
         fig_num = du_number * 3
         plt.figure()
         plt.clf()
-        fft_freq = np.fft.rfftfreq(1024) * 500  # [MHz]
+        fft_freq = np.fft.rfftfreq(n_samples) * 500  # [MHz]
+
         for i in range(nb_time_bins):
             idx = np.where((i*time_divider <= time_du) * (time_du < (i+1)*time_divider))[0]
             time_indices.append(idx)
@@ -427,6 +430,8 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
 
 
 def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ_GP13()):
+    
+    n_samples = len(tadc.trace_ch[0][0][0])
 
     if du_list is None:
         du_list = get_dulist(tadc)
@@ -465,7 +470,7 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
         fig_num = du_number * 3
         plt.figure(figsize=(8, 15))
         plt.clf()
-        fft_freq = np.fft.rfftfreq(1024) * 500  # [MHz]
+        fft_freq = np.fft.rfftfreq(n_samples) * 500  # [MHz]
         for i in range(nb_time_bins):
             idx = np.where((i*time_divider <= time_du) * (time_du < (i+1)*time_divider))[0]
             time_indices.append(idx)
