@@ -62,6 +62,24 @@ class TZ_GP13(tzinfo):
         return f"{self.__class__.__name__}()"
 
 
+def get_column_for_given_du_gp13(tadc, request, du_number):
+    """
+    Function that extract the values of a given column for a given du.
+    Also outputs the corresponding arrays of dates.
+
+    This function work for tree that are loaded wirth the concatenanted technique
+    """
+    duid = tadc.du_id.to_numpy()
+    gps_ts = tadc.gps_time.to_numpy().squeeze()
+
+    idu = np.where(duid == du_number)[0]
+    gps_ts_du = gps_ts[idu]
+    result_all = tadc[request]
+    result = result_all[idu]
+    date_idu = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in gps_ts_du]
+    return result, date_idu
+
+
 
 def get_column_for_given_du(tree_, request, du_number):
     """
