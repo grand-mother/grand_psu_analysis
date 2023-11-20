@@ -140,8 +140,8 @@ if __name__ == "__main__":
     if do_battery_plot:
         request = "battery_level"
 
-        fig, axs = plt.subplots()
-        axs.xaxis.set_major_locator(mdates.HourLocator(interval=4, tz=tz))
+        fig, axs = plt.subplots(figsize=(10, 8))
+        axs.xaxis.set_major_locator(mdates.HourLocator(interval=12, tz=tz))
         axs.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %Hh%M', tz=tz))
 
         for idx in du_list:
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     # Plot of the mean of the PSD in times slices
     # TO DO: checke the tz for the times slices. 
-    nb_time_slices = 4
+    nb_time_slices = 10
     if site == 'gaa':
         utils.plot_mean_psd_time_sliced(tadc, nb_time_slices, plot_path, du_list=du_list)
     if site == 'gp13':
@@ -288,7 +288,7 @@ if __name__ == "__main__":
             traces_np = traces_[:, 0, 0:3].to_numpy()
 
             nb_events = traces_np.shape[0]
-            idxs = np.random.permutation(nb_events)[0:20]
+            idxs = np.random.permutation(nb_events)[0:5]
 
             for idd in idxs:
                 title = '{}, event #{}, DU {}'.format(base, tadc.event_number[idd], idu)
@@ -302,7 +302,7 @@ if __name__ == "__main__":
             traces_, date_array_ = utils.get_column_for_given_du_gp13(tadc, request, idu)
             traces_np4d = traces_[:, 0, 0:4].to_numpy()
             nb_events = traces_np4d.shape[0]
-            idxs = np.random.permutation(nb_events)[0:20]
+            idxs = np.random.permutation(nb_events)[0:5]
 
             for idd in idxs:
                 title = '{},\n event #{}, DU {}'.format(base, tadc.event_number[idd], idu)
