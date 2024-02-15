@@ -199,7 +199,7 @@ if __name__ == "__main__":
                 if site == 'gp13':
                     id_ch = i+1
 
-                plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch{}.png'.format(idx, id_ch))
+                plot_filename = os.path.join(plot_path, 'fourier_vs_time_du{}_ch{}.png'.format(idu, id_ch))
                 traces_array = traces_np[:, i]
 
                 gps_lon, _ = utils.get_column_for_given_du(trawv, 'gps_long', idu)

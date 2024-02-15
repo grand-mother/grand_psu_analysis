@@ -5,7 +5,7 @@ import datetime
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import os
-
+import grand_psu_lib.utils.filtering as filt
 import pymap3d
 from datetime import time, tzinfo, timedelta
 
@@ -149,18 +149,19 @@ def plot_trace_and_psd(trace, title, save_path, tadc_or_voltage='voltage'):
     axs[1, 0].legend(loc=1)
     axs[2, 0].legend(loc=1)
 
-    psd = np.abs(np.fft.rfft(trace)**2)
+    psd = filt.return_psd(trace, 500)
+    #np.abs(np.fft.rfft(trace)**2)
 
     axs[0, 1].plot(fft_freq, psd[0])
     axs[1, 1].plot(fft_freq, psd[1])
     axs[2, 1].plot(fft_freq, psd[2])
 
     axs[0, 1].set_yscale('log')
-    axs[0, 1].set_ylim(5e3, 2e7)
+    axs[0, 1].set_ylim(1e-2, 1e3)
     axs[1, 1].set_yscale('log')
-    axs[1, 1].set_ylim(5e3, 2e7)
+    axs[1, 1].set_ylim(1e-2, 1e3)
     axs[2, 1].set_yscale('log')
-    axs[2, 1].set_ylim(5e3, 2e7)
+    axs[2, 1].set_ylim(1e-2, 1e3)
     
 
     #axs[0].set_title('{}, event #{}, DU {} \n cluster {}'.format(base, trawv.event_number[ind_[i]], idx, lab))
@@ -169,11 +170,10 @@ def plot_trace_and_psd(trace, title, save_path, tadc_or_voltage='voltage'):
     fig.suptitle(title)
     if tadc_or_voltage == 'voltage':
         axs[1, 0].set_ylabel('Raw voltage [$\mu$V]')
-        axs[1, 1].set_ylabel('PSD [tbd]')
+        axs[1, 1].set_ylabel('PSD [muV^2 / MHz]')
     if tadc_or_voltage == 'tadc':
         axs[1, 0].set_ylabel('ADC')
-        axs[1, 1].set_ylabel('PSD [tbd]')
-
+        axs[1, 1].set_ylabel('PSD [ADC^2 / MHz]')
 
     plt.savefig(save_path)
     plt.close()
@@ -213,17 +213,21 @@ def plot_trace_and_psd4d(trace, title, save_path, tadc_or_voltage='voltage'):
     axs[2, 0].legend(loc=1)
     axs[3, 0].legend(loc=1)
 
-    psd = np.abs(np.fft.rfft(trace)**2)
-
+    psd = filt.return_psd(trace, 500)
+    
     axs[0, 1].plot(fft_freq, psd[0])
     axs[1, 1].plot(fft_freq, psd[1])
     axs[2, 1].plot(fft_freq, psd[2])
     axs[3, 1].plot(fft_freq, psd[3])
 
     axs[0, 1].set_yscale('log')
+    axs[0, 1].set_ylim(1e-2, 1e3)
     axs[1, 1].set_yscale('log')
+    axs[1, 1].set_ylim(1e-2, 1e3)
     axs[2, 1].set_yscale('log')
+    axs[2, 1].set_ylim(1e-2, 1e3)
     axs[3, 1].set_yscale('log')
+    axs[3, 1].set_ylim(1e-2, 1e3)
 
     #axs[0].set_title('{}, event #{}, DU {} \n cluster {}'.format(base, trawv.event_number[ind_[i]], idx, lab))
     axs[3, 0].set_xlabel('sample id')
@@ -231,11 +235,10 @@ def plot_trace_and_psd4d(trace, title, save_path, tadc_or_voltage='voltage'):
     fig.suptitle(title)
     if tadc_or_voltage == 'voltage':
         axs[1, 0].set_ylabel('Raw voltage [$\mu$V]')
-        axs[1, 1].set_ylabel('PSD [tbd]')
+        axs[1, 1].set_ylabel('PSD [muV^2 / MHz]')
     if tadc_or_voltage == 'tadc':
         axs[1, 0].set_ylabel('ADC')
-        axs[1, 1].set_ylabel('PSD [tbd]')
-
+        axs[1, 1].set_ylabel('PSD [ADC^2 / MHz]')
 
     plt.savefig(save_path)
     plt.close()
@@ -409,8 +412,11 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
 
             traces_np_timei = traces_np[time_indices[i]]
             n_traces = traces_np_timei.shape[0]
-            fft_timei = np.fft.rfft(traces_np_timei)
-            psd_timei = np.abs(fft_timei**2)
+            #fft_timei = np.fft.rfft(traces_np_timei)
+            psd_timei = filt.return_psd(traces_np_timei, 500)
+            #np.abs(fft_timei**2)
+            
+
             if n_traces > 0:
                 plt.figure(fig_num, figsize=(15, 15))
                 
@@ -442,9 +448,9 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
         
         plt.title('du {} ch. X'.format(du_number))
         plt.yscale('log')
-        plt.ylim(5e3, 2e7)
+        plt.ylim(1e-2, 1e3)
         plt.xlabel('Frequency [MHz]')
-        plt.ylabel('Mean PSD [A. U.]')
+        plt.ylabel('PSD [ADC^2 / MHz]')
         plt.legend(loc=0)
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chX.png".format(du_number)))
@@ -454,9 +460,9 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
         
         plt.title('du {} ch. Y'.format(du_number))
         plt.yscale('log')
-        plt.ylim(5e3, 2e7)
+        plt.ylim(1e-2, 1e3)
         plt.xlabel('Frequency [MHz]')
-        plt.ylabel('Mean PSD [A. U.]')
+        plt.ylabel('PSD [ADC^2 / MHz]')
         plt.legend(loc=0)
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chY.png".format(du_number)))
@@ -466,9 +472,9 @@ def plot_mean_psd_time_sliced(tadc, nb_time_bins, plot_path, du_list=None, tz=TZ
         
         plt.title('du {} ch. Z'.format(du_number))
         plt.yscale('log')
-        plt.ylim(5e3, 2e7)
+        plt.ylim(1e-2, 1e3)
         plt.xlabel('Frequency [MHz]')
-        plt.ylabel('Mean PSD [A. U.]')
+        plt.ylabel('PSD [ADC^2 / MHz]')
         plt.legend(loc=0)
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chZ.png".format( du_number)))
@@ -518,8 +524,9 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
 
             traces_np_timei = traces_np[time_indices[i]]
             n_traces = traces_np_timei.shape[0]
-            fft_timei = np.fft.rfft(traces_np_timei)
-            psd_timei = np.abs(fft_timei**2)
+            #fft_timei = np.fft.rfft(traces_np_timei)
+            psd_timei = filt.return_psd(traces_np_timei, 500)
+            #psd_timei = np.abs(fft_timei**2)
             if n_traces > 0:
 
                 bin_date_min_gmt = datetime.datetime.fromtimestamp(t0+i*time_divider, tz=TZ_GMT())
@@ -555,8 +562,8 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
         plt.title('du {} ch. X'.format(du_number))
         plt.yscale('log')
         plt.xlabel('Frequency [MHz]')
-        plt.ylabel('Mean PSD [A. U.]')
-        plt.ylim(5e3, 2e7)
+        plt.ylabel('PSD [ADC^2 / MHz]')
+        plt.ylim(1e-2, 1e3)
         plt.legend(loc=0)
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chX.png".format(du_number)))
@@ -567,9 +574,9 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
         plt.title('du {} ch. Y'.format(du_number))
         plt.yscale('log')
         plt.xlabel('Frequency [MHz]')
-        plt.ylabel('Mean PSD [A. U.]')
+        plt.ylabel('PSD [ADC^2 / MHz]')
         plt.legend(loc=0)
-        plt.ylim(5e3, 2e7)
+        plt.ylim(1e-2, 1e3)
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chY.png".format(du_number)))
         plt.close()
@@ -579,9 +586,9 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
         plt.title('du {} ch. Z'.format(du_number))
         plt.yscale('log')
         plt.xlabel('Frequency [MHz]')
-        plt.ylabel('Mean PSD [A. U.]')
+        plt.ylabel('PSD [ADC^2 / MHz]')
         plt.legend(loc=0)
-        plt.ylim(5e3, 2e7)
+        plt.ylim(1e-2, 1e3)
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chZ.png".format( du_number)))
         plt.close()
@@ -591,9 +598,9 @@ def plot_mean_psd_time_sliced_gp13(tadc, nb_time_bins, plot_path, du_list=None, 
         plt.title('du {} ch. W'.format(du_number))
         plt.yscale('log')
         plt.xlabel('Frequency [MHz]')
-        plt.ylabel('Mean PSD [A. U.]')
+        plt.ylabel('PSD [ADC^2 / MHz]')
         plt.legend(loc=0)
-        plt.ylim(5e3, 2e7)
+        plt.ylim(1e-2, 1e3)
         plt.tight_layout()
         plt.savefig(os.path.join(plot_path, "psd_std_vs_time_{}_chW.png".format( du_number)))
         plt.close()
@@ -605,13 +612,14 @@ def plot_fourier_vs_time(traces_array, date_array, fft_freq, longitude, plot_tit
 
     figsize_y = np.int32(traces_array.shape[0]/6/60/24*5) + 10
 
-    fft = np.fft.rfft(traces_array)
+    #fft = np.fft.rfft(traces_array)
+    psd = filt.return_psd(traces_array, 500)
     fig, axs = plt.subplots(figsize=(20, figsize_y))
     axs.yaxis.set_major_locator(mdates.HourLocator(interval=4, tz=tz))
     axs.yaxis.set_major_formatter(mdates.DateFormatter('%m/%d %Hh%M', tz=tz))
 
     X, Y = np.meshgrid(fft_freq, date_array)
-    c = axs.pcolormesh(X, Y, np.log10(np.abs(fft)**2), vmin=np.log10(5e3), vmax=7)
+    c = axs.pcolormesh(X, Y, np.log10(psd), vmin=np.log10(1e-2), vmax=3)
 
     axs.set_xticks([0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250])
 

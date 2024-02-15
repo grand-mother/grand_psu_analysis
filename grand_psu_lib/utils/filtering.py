@@ -23,12 +23,25 @@ def get_trace_std_freqband(tadc, trawv, fft_freq, f1, f2, du_number):
     fft_np[:, :, ind] = 0
 
     trace2 = np.fft.irfft(fft_np)
+    return trace2
+
 
     std_ch0 = trace2.std(axis=2)[:, 0]
     std_ch1 = trace2.std(axis=2)[:, 1]
     std_ch2 = trace2.std(axis=2)[:, 2]
 
     return date_array, std_ch0, std_ch1, std_ch2, bl, date_bl, gps_temp, date_gpstemp
+
+
+def get_filtered_traces(trace_array, fft_freq, f1, f2):
+
+    ind = np.where((fft_freq > f1) * (fft_freq < f2))[0]
+
+    fft_np = np.fft.rfft(trace_array)
+    fft_np[:, :, ind] = 0
+
+    trace2 = np.fft.irfft(fft_np)
+    return trace2
 
 
 def return_psd(trace_array, sampling_rate):
