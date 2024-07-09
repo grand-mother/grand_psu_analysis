@@ -673,3 +673,33 @@ def plot_fourier_vs_time(traces_array, date_array, fft_freq, longitude, plot_tit
     fig.colorbar(c, orientation='horizontal', label='PSD [units]', pad=0.10)
 
     plt.savefig(plot_filename, dpi=500)
+
+
+def get_qty_from_list_of_files(list_of_files, request):
+    res = []
+
+    for file in list_of_files:
+        print('working on file: ', file)
+        try:
+            trawv = uproot.open(file)['trawvoltage']
+        except OSError:
+            print('empty file')
+        else:
+            du_list = get_dulist(trawv)
+            for idu in du_list:
+                try:
+                    a, b = get_column_for_given_du(trawv, request, idu)
+                    qty = a.to_numpy().squeeze()
+                except ValueError:
+                    print("duplicate here")
+                else:
+                    a, b = get_column_for_given_du(trawv, request, idu)
+                    print(len(qty), len(b))
+                    date_array = b
+                    ts_list = [datetime.datetime.timestamp(d) for d in date_array]
+                    ts_array = np.array(ts_list)
+                    du_array = qty.copy()*0 + idu
+                    res.append([qty, ts_array, du_array])
+
+    res = np.hstack(res)
+    return res.T
