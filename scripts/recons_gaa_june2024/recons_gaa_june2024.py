@@ -90,7 +90,6 @@ plt.tight_layout()
 
 
 data_5du_path = '/Users/ab212678/Documents/GRAND/Codes/grand_psu_analysis/gaa_5du_gaa_20240427_224428_RUN003002_CD_phys/'
-
 data_4du_path = '/Users/ab212678/Documents/GRAND/Codes/grand_psu_analysis/good_du4/'
 data_4du_path = '/Users/ab212678/Documents/GRAND/Codes/grand_psu_analysis/gaa_4du_gaa_20240427_224428_RUN003002_CD_phys/'
 list_5du = np.sort(glob.glob(data_5du_path + '/*.npy'))
