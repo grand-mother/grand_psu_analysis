@@ -45,7 +45,7 @@ def extract_and_plot_CD_data(tadc, trawv, n_CD_du, do_plots_, recons_data_path_,
             if n_CD_du >= 5:
                 random_rate = 1
             else:
-                random_rate = 0.03
+                random_rate = 0.3
             if np.random.rand(1) > random_rate:
                 do_plots = False
 
@@ -154,9 +154,9 @@ def extract_and_plot_CD_data(tadc, trawv, n_CD_du, do_plots_, recons_data_path_,
 
 site = 'gaa'
 
-file_list = glob.glob('/Users/ab212678/Documents/GRAND/data/auger/2024/04/*20240412*CD*.root')
+file_list = glob.glob('/Users/ab212678/Documents/GRAND/data/auger/2024/08/*CD*.root')
 
-output_path = '/Users/ab212678/Documents/GRAND/data/study_gaa_recons_june24_v5_with_traces/'
+output_path = '/Users/ab212678/Documents/GRAND/data/study_gaa_recons/august2024_v1/'
 
 for file_gaa in file_list:
 
@@ -169,17 +169,17 @@ for file_gaa in file_list:
     recons_data_path_ = os.path.join(output_path, '{}/recons_data/'.format(file_base))
     os.makedirs(plot_path_, exist_ok=True)
 
-
     do_plots_ = True
 
-
-    file_dict_gaa= {file_gaa: "tadc"}
-    file_dict_gaa_trawv= {file_gaa: "trawvoltage"}
+    file_dict_gaa = {file_gaa: "tadc"}
+    file_dict_gaa_trawv = {file_gaa: "trawvoltage"}
 
     tadc_gaa = uproot.concatenate(file_dict_gaa)
     trawv_gaa = uproot.concatenate(file_dict_gaa_trawv)
 
     list_gaa = utils.get_dulist(tadc_gaa)
-    for n_CD_du in [3, 4, 5, 6, 7, 8, 9, 10]:
+    #for n_CD_du in [3, 4, 5, 6, 7, 8, 9, 10]:
+    for n_CD_du in [4, 5, 6, 7, 8, 9, 10]:
+    
         # n_CD_du = 5
         extract_and_plot_CD_data(tadc_gaa, trawv_gaa, n_CD_du, do_plots_, recons_data_path_, plot_path_)

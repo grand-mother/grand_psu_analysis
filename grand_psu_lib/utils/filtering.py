@@ -54,7 +54,7 @@ def get_filtered_traces_inband(trace_array, fft_freq, f1, f2):
     return trace2
 
 
-def return_psd(trace_array, sampling_rate):
+def return_psd(trace_array, sampling_frequency):
     # make sure the trace array has the samples vbalues in the last dimension
     # units of the psd are [trace_array]^2/ [sampling_rate]
     fft = np.fft.rfft(trace_array)
@@ -62,7 +62,7 @@ def return_psd(trace_array, sampling_rate):
     psd[..., 1:-1] *= 2
     N = trace_array.shape[-1]
     print(N)
-    psd = psd / N / sampling_rate
+    psd = psd / N / sampling_frequency
     return psd
 
 
