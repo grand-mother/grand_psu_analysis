@@ -7,11 +7,15 @@ from matplotlib import rc
 import os
 import json
 
-
-import recons_PWF as pwf
+from PWF_reconstruction import recons_PWF as pwf
+#import recons_PWF as pwf
 import scipy
+from scipy import interpolate as interp
 from grid_shape_lib.utils import diff_spec as tale
 from grid_shape_lib.modules import hexy
+import wavefronts_swf as swf
+
+
 # rc('font', **{'family':'serif','serif':['Palatino']})
 # rc('text', usetex = True)
 rc('font', size=16.0)
@@ -20,6 +24,47 @@ D2R = np.pi / 180
 R2D = 180 / np.pi
 
 c_light = 2.997924580e8
+
+
+def thetaphi_to_k(theta, phi):
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    cp = np.cos(phi)
+    sp = np.sin(phi)
+    K =  - np.array([st*cp, st*sp, ct])
+    return K
+
+def k_to_theta_phi(k):
+    theta = np.arccos(-k[2])
+    cp = - k[0]/np.sin(theta)
+    sp = - k[1]/np.sin(theta)
+    phi = np.arctan2(sp, cp)
+    if phi < 0:
+        phi += 2 * np.pi
+    return theta, phi
+
+
+
+def bin_array(array_x, array_y, array_bins):
+    id_bins = np.digitize(array_x, array_bins)
+    n_bins = len(array_bins) - 1
+
+    mean_values = np.zeros(n_bins)
+    std_values = np.zeros(n_bins)
+    n_values = np.zeros(n_bins)
+
+    for i in range(0, n_bins):
+        idd = np.where(id_bins == i+1)[0]
+        if len(idd) > 0:
+            mean_values[i] = array_y[idd].mean()
+            std_values[i] = array_y[idd].std()
+
+            n_values[i] = len(array_y[idd])
+
+    return mean_values, std_values, n_values
+
+
+
 
 class Layout_dc2:
     def __init__(
@@ -35,7 +80,8 @@ class Layout_dc2:
         n_r=1.000139,
         do_noise_timing=True,
         sigma_timing=5e-9,
-        is_coreas=False
+        is_coreas=False,
+        do_swf=False
     ):
         self.du_pos_base = du_pos_base
         self.du_names_base = du_names_base
@@ -62,6 +108,7 @@ class Layout_dc2:
         self.n_r = n_r
         self.layout_name = layout_name
         self.A_sim = 170 * 1000**2  # m^2
+        self.do_swf = do_swf
 
         self.event_res_tab_file = os.path.join(self.plot_path, 'event_res_tab.npy')
         if os.path.isfile(self.event_res_tab_file):
@@ -71,15 +118,41 @@ class Layout_dc2:
             np.save(self.event_res_tab_file, self.event_res_tab)
 
         self.make_shortcuts()
+        self.get_xmax_proxy_laws()
+
+    def get_xmax_proxy_laws(self):
+        evt = self.event_res_tab
+
+        is_trigged = np.where(evt[:, 10]> -1)[0]
+
+        zen_bins_limits = np.linspace(0, 130, 140)
+
+        binned_xmax_z = bin_array(evt[:, 2], evt[:, 18], zen_bins_limits)
+        binned_xmax_z_trigged = bin_array(evt[is_trigged, 2], evt[is_trigged, 18], zen_bins_limits)
+
+        zen_bins_centers = (zen_bins_limits[1:]+zen_bins_limits[:-1])/2
+
+        self.zen_bins_centers = zen_bins_centers
+        self.zen_bins_limits = zen_bins_limits
+        self.binned_xmax_z = binned_xmax_z
+        self.binned_xmax_z_trigged = binned_xmax_z_trigged
+
+        d2d_max = np.sqrt((evt[:, 17] - evt[:, 5])**2 + (evt[:, 16] - evt[:, 4])**2)
+        binned_dmax = bin_array(evt[:, 2], d2d_max, zen_bins_limits)
+        binned_dmax_trigged = bin_array(evt[is_trigged, 2], d2d_max[is_trigged], zen_bins_limits)
+
+        self.binned_dmax = binned_dmax
+        self.binned_dmax_trigged = binned_dmax_trigged
 
     def get_global_lists(self):
 
         global_pos_list = []
         np.random.seed(seed=6578)
 
-        event_res_tab = np.zeros((len(self.event_list), 16)) - 1
+        event_res_tab = np.zeros((len(self.event_list), 24)) - 1
 
         for k, ev_id in enumerate(self.event_list[0:]):
+            print('k=', k)
 
             res_file = os.path.join(self.files_dir, '{}.npy'.format(ev_id))
             json_file = os.path.join(self.files_dir, '{}.json'.format(ev_id))
@@ -99,6 +172,30 @@ class Layout_dc2:
             event_res_tab[k, 5] = np.float32(event_params['shower_core_y'])
             event_res_tab[k, 6] = np.float32(event_params['xmax_grams'])
             event_res_tab[k, 7] = np.float32(event_params['event_weight'])
+
+            event_res_tab[k, 16] = np.float32(event_params['xmax_pos_x'])
+            event_res_tab[k, 17] = np.float32(event_params['xmax_pos_y'])
+            event_res_tab[k, 18] = np.float32(event_params['xmax_pos_z'])
+
+
+            ### load the xmax proxies if they exist
+            path_ = '/Users/ab212678/Documents/GRAND/sims/DC2/DC2Training/PWF_SWF_data/'
+            if os.path.isfile(os.path.join(path_, 'zen_bin_centers.npy')):
+                zen_bins_centers = np.load(os.path.join(path_, 'zen_bin_centers.npy'))
+                binned_xmax_z = np.load(os.path.join(path_, 'binned_xmax_z_75_4.npy'))
+                binned_dmax = np.load(os.path.join(path_, 'binned_dmax_75_4.npy'))
+
+            interp_xmax_z = interp.interp1d(zen_bins_centers, binned_xmax_z)
+            interp_dmax = interp.interp1d(zen_bins_centers, binned_dmax)
+
+            core_alt = 1264
+            # corrections de Marion pour DC2 
+            event_res_tab[k, 16] += event_res_tab[k, 4]
+            event_res_tab[k, 17] += event_res_tab[k, 5]
+
+            #shc_z += core_alt
+            arr[:, 3] += core_alt
+
 
             ev_du_ids = arr[:, 0]
 
@@ -134,15 +231,15 @@ class Layout_dc2:
                     theta = np.float32(event_params['zenith'])
                     phi = np.float32(event_params['azimuth'])
 
-                    theta_pred, phi_pred = pwf.PWF_semianalytical(x_ants, t_ants, cr=self.n_r, c=c_light)
+                    theta_pred, phi_pred = pwf.PWF_semianalytical(x_ants, t_ants, n=self.n_r, c=c_light)
                     if np.abs(phi_pred - phi*D2R) > 320 * D2R:
                         phi_pred += -360 * D2R
 
-                    cov = pwf.Covariance_tangentplane(theta*D2R, phi*D2R, x_ants, self.sigma_timing, c=c_light, cr=self.n_r)
+                    cov = pwf.Covariance_tangentplane(theta*D2R, phi*D2R, x_ants, self.sigma_timing, c=c_light, n=self.n_r)
                     sigma_theta = np.sqrt(cov[0, 0])
                     sigma_phi = np.sqrt(cov[1, 1])
 
-                    cov2 = pwf.fisher_Variance(theta*D2R, phi*D2R, x_ants, self.sigma_timing, c=c_light, cr=self.n_r)
+                    cov2 = pwf.cov_matrix(theta*D2R, phi*D2R, x_ants, self.sigma_timing, c=c_light, n=self.n_r)
                     sigma_thetaF = np.sqrt(cov2[0, 0])
                     sigma_phiF = np.sqrt(cov2[1, 1])
                     event_res_tab[k, 10] = theta_pred*R2D
@@ -153,7 +250,50 @@ class Layout_dc2:
                     event_res_tab[k, 14] = sigma_thetaF*R2D
                     event_res_tab[k, 15] = sigma_phiF*R2D
 
+                    do_swf = self.do_swf
+                    if do_swf:
+                        ## get an initial guess for xmax_pos from theta, phi given by pwf
+                        xmaxz = interp_xmax_z(theta_pred*R2D)
+                        dmax = interp_dmax(theta_pred*R2D)
+
+                        xeff = np.cos(phi_pred) * dmax
+                        yeff = np.sin(phi_pred) * dmax
+                        zeff = xmaxz
+
+                        initial_guess = np.array([xeff, yeff, zeff, t_ants.min()])
+
+                        #initial_guess = np.array([event_res_tab[k, 16], event_res_tab[k, 17], event_res_tab[k, 18], t_ants.mean()])
+                      
+                        swf_fit = swf.get_SWF_fit(x_ants, t_ants, initial_guess, sigma_t=self.sigma_timing, cr=1.00)
+                        
+                        xmax_x = event_res_tab[k, 16]
+                        xmax_y = event_res_tab[k, 17]
+                        xmax_z = event_res_tab[k, 18]
+                        #swf_fit = [xmax_x, xmax_y, xmax_z]
+                        print('xmax_x={}, xmax_y={}, xmax_z={}'.format(xmax_x, xmax_y, xmax_z))
+                        print(swf_fit)
+                        shc_x = event_res_tab[k, 4]
+                        shc_y = event_res_tab[k, 5]
+                        
+                        K_recons_swf = np.array([-swf_fit[0] + shc_x, -swf_fit[1] + shc_y, -swf_fit[2] + core_alt ])
+                        K_recons_swf /= np.linalg.norm(K_recons_swf)
+                        tt, pp = k_to_theta_phi(K_recons_swf)
+                        print('theta_gt={}, phi_gt={}'.format(theta, phi))
+                        print('theta_swf_sim3={}, phi_swf_sim3={}'.format(180/np.pi * tt, 180/np.pi*pp))
+                        print('     ')
+                        event_res_tab[k, 19] = swf_fit[0]
+                        event_res_tab[k, 20] = swf_fit[1]
+                        event_res_tab[k, 21] = swf_fit[2]
+
+                        event_res_tab[k, 22] = tt * 180/np.pi
+                        event_res_tab[k, 23] = pp * 180/np.pi
+
                     global_pos_list.append([x_ants, t_ants])
+
+
+
+
+
                 else:
                     global_pos_list.append(-1)
             else:
@@ -161,10 +301,8 @@ class Layout_dc2:
 
             self.global_pos_list = global_pos_list
             self.event_res_tab = event_res_tab
-            
 
     def make_shortcuts(self):
-
 
         good_ids = np.where(
             (self.event_res_tab[:, 9] >= self.n_trig_thres) *
@@ -179,7 +317,10 @@ class Layout_dc2:
         self.theta_pred = self.event_res_tab[good_ids, 10]
         self.phi_pred = self.event_res_tab[good_ids, 11]
 
-        self.sig_theta_gt = self.event_res_tab[good_ids, 14]
+        self.theta_swf = self.event_res_tab[good_ids, 22]
+        self.phi_swf = self.event_res_tab[good_ids, 23]
+
+        self.sig_theta_gt = self.event_res_tab[good_ids, 12]
         self.sig_phi_gt = self.event_res_tab[good_ids, 13]
 
         self.sig_theta_gtF = self.event_res_tab[good_ids, 14]
@@ -193,10 +334,10 @@ class Layout_dc2:
         self.res_phi = self.phi_pred - self.phi_gt
         self.res_theta = self.theta_pred - self.theta_gt
 
+        self.res_phi_swf = self.phi_swf - self.phi_gt
+        self.res_theta_swf = self.theta_swf - self.theta_gt
+
         self.id_good = np.where((np.abs(self.res_phi) < 5)*(np.abs(self.res_theta) < 5))
-
-
-        
 
     def plot_event(self, id):
 
@@ -250,8 +391,6 @@ class Layout_dc2:
         plt.tight_layout()
         return fig
 
-
-
     def make_plots(self):
         # self.plot_raw_residues()
         # self.plot_2d_residues()
@@ -261,8 +400,10 @@ class Layout_dc2:
         # self.plot_residues_with_error_bars()
         # self.plot_residues_with_error_bars_zoom()
         # self.plot_scatter_uncertainties()
-        self.plot_events_cores()
+        #self.plot_events_cores()
         self.plot_layout()
+        #self.plot_residues_with_error_bars_zoom_swf()
+        #self.plot_2d_residues_swf()
 
     def plot_2d_residues(self):
 
@@ -289,13 +430,36 @@ class Layout_dc2:
         fig.tight_layout()
         plt.savefig(os.path.join(self.plot_path, '2d_residues_zoom_{}.png'.format(self.layout_name)))
 
+    def plot_2d_residues_swf(self):
+
+        fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+        sc = ax.scatter(self.res_phi_swf, self.res_theta_swf, c=self.n_ant, vmin=3, vmax=10, cmap='Paired')
+
+        ax.set_xlabel('phi_pred_swf - phi_gt [deg]')
+        ax.set_ylabel('theta_pred_swf - theta_gt [deg]')
+        ax.set_title('2d residues for SWF')
+        fig.colorbar(sc, label='# antennas')
+        fig.tight_layout()
+
+        plt.savefig(os.path.join(self.plot_path, '2d_residues_swf_{}.png'.format(self.layout_name)))
+
+        fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+        sc = ax.scatter(self.res_phi_swf, self.res_theta_swf, c=self.n_ant, s=4, vmin=3, vmax=10, cmap='Paired')
+
+        ax.set_xlabel('phi_pred_swf - phi_gt [deg]')
+        ax.set_ylabel('theta_pred_swf - theta_gt [deg]')
+        ax.set_title('2d residues for SWF')
+        ax.set_xlim(-3, 3)
+        ax.set_ylim(-3, 3)
+        fig.colorbar(sc, label='# antennas')
+        fig.tight_layout()
+        plt.savefig(os.path.join(self.plot_path, '2d_residues_swf_zoom_{}.png'.format(self.layout_name)))
+
     def plot_layout(self):
 
-       
-
+    
         idx = ([np.where(self.du_names_base == ib)[0] for ib in self.du_names])
         idx = [idxx[0] for idxx in idx if len(idxx) > 0]
-
 
         #idx = np.where(self.du_ids == self.du_names_base)[0]
         fig, ax = plt.subplots(1, 1, figsize=(8, 8))
@@ -321,7 +485,6 @@ class Layout_dc2:
         coords_json_name = os.path.join(self.plot_path, 'coords{}.json'.format(self.layout_name))
         with open(coords_json_name, 'w') as f:
             json.dump(coords, f)
-
 
     def plot_events_cores(self):
         import matplotlib.patches as mpatches
@@ -483,9 +646,6 @@ class Layout_dc2:
             plt.tight_layout()
             plt.savefig(os.path.join(self.plot_path, 'hist_azimuth_residues_DC2_v1_{:.3}_zen_{:.3}.png').format(zen_bin_edges[i], zen_bin_edges[i+1]))
 
-
-
-
     def plot_histrogram_normalized_residues(self):
 
         plt.figure(11)
@@ -562,7 +722,6 @@ class Layout_dc2:
             plt.title('Normalized phi residues {:.3}<zen<{:.3}'.format(zen_bin_edges[i], zen_bin_edges[i+1]))
             plt.tight_layout()
             plt.savefig(os.path.join(self.plot_path, 'hist_azimuth_normalized_residues_DC2_v1_{:.3}_zen_{:.3}.png').format(zen_bin_edges[i], zen_bin_edges[i+1]))
-
 
     def plot_histrogram_normalized_residues_distane_cut(self):
 
@@ -651,9 +810,6 @@ class Layout_dc2:
             plt.title('Normalized phi residues far_from_center {:.3}<zen<{:.3}'.format(zen_bin_edges[i], zen_bin_edges[i+1]))
             plt.tight_layout()
             plt.savefig(os.path.join(self.plot_path, 'hist_azimuth_normalized_residues_DC2_v1_far_from_center_{:.3}_zen_{:.3}.png').format(zen_bin_edges[i], zen_bin_edges[i+1]))
-
-
-
 
     def plot_residues_with_error_bars(self):
 
@@ -776,6 +932,97 @@ class Layout_dc2:
             ax.set_ylim((-1, 1))
             fig.tight_layout()
             plt.savefig(os.path.join(self.plot_path, 'az_residues_vs_azimuth_DC2_vs_coredistance_{:.3}_zen_{:.3}.png').format(zen_bin_edges[i], zen_bin_edges[i+1]))
+
+    def plot_residues_with_error_bars_zoom_swf(self):
+
+        ###### residues with errors bars  color coded with #ant
+
+        fig, ax = plt.subplots(1, 1, figsize=(15, 6))
+        ax.plot(self.phi_gt, self.phi_gt-self.phi_gt, 'k-')
+        sc = ax.scatter(self.phi_gt, (self.phi_swf - self.phi_gt), c=self.n_ant, s=10)
+        fig.colorbar(sc, label='# antennas')
+        ax.set_title('Azimuth residues for SWF')
+        ax.set_xlabel('phi_gt')
+        ax.set_ylabel('phi_pred_swf - phi_gt')
+        ax.set_ylim((-3, 3))
+        #ax.set_ylim((-1, 1))
+        fig.tight_layout()
+        plt.savefig(os.path.join(self.plot_path, 'az_residues_swf_vs_azimuth_DC2_v3_{}.png'.format(self.layout_name)))
+        
+        fig, ax = plt.subplots(1, 1, figsize=(15, 6))
+        #        ax.errorbar(self.phi_gt, (self.theta_pred - self.theta_gt), yerr=2*self.sig_theta_gt, fmt='.',  linestyle="none", ms=1, zorder=-1)
+        ax.plot(self.phi_gt, self.theta_gt-self.theta_gt, 'k-')
+        sc = ax.scatter(self.phi_gt, (self.theta_swf - self.theta_gt), c=self.n_ant, s=10 )
+        fig.colorbar(sc, label='# antennas')
+        ax.set_title('Zenith residues for SWF')
+        ax.set_xlabel('phi_gt')
+        ax.set_ylabel('theta_pred_swf - theta_gt')
+        ax.set_ylim((-3, 3))
+        #ax.set_ylim((-1, 1))
+        fig.tight_layout()
+        plt.savefig(os.path.join(self.plot_path, 'zen_residues_swf_vs_azimuth_DC2_v3_{}.png'.format(self.layout_name)))
+
+
+        # same plots but binned in enith
+
+        ## binning in zenith
+        n_bins = 10
+        zen_bin_edges = np.linspace(60, 88, n_bins+1)
+        zen_bin_centers = (zen_bin_edges[1:] + zen_bin_edges[:-1]) * 0.5 
+
+        bin_indices = np.digitize(self.theta_gt, zen_bin_edges)
+        bin_value = []
+        bin_sigma = []
+
+        for i in range(n_bins):
+            residues_theta_swf = (self.theta_swf - self.theta_gt)[bin_indices == i+1]
+            
+            fig, ax = plt.subplots(1, 1, figsize=(15, 6))
+            #ax.errorbar(self.phi_gt[bin_indices == i+1], (self.phi_pred - self.phi_gt)[bin_indices == i+1], yerr=3*self.sig_phi_gt[bin_indices == i+1], fmt='.',  linestyle="none", ms=1, zorder=-1)
+            ax.plot(self.phi_gt[bin_indices == i+1], (self.phi_gt-self.phi_gt)[bin_indices == i+1], 'k-')
+            sc = ax.scatter(self.phi_gt[bin_indices == i+1], (self.phi_swf - self.phi_gt)[bin_indices == i+1], c=self.n_ant[bin_indices == i+1], s=10 )
+            fig.colorbar(sc, label='# antennas')
+            ax.set_title('Azimuth residues {:.3}<zen<{:.3}'.format(zen_bin_edges[i], zen_bin_edges[i+1]))
+            
+            ax.set_xlabel('phi_gt')
+            ax.set_ylabel('phi_pred_swf - phi_gt')
+
+            ax.set_ylim((-1, 1))
+            if 'GP13' in self.layout_name:
+                ax.set_ylim((-3, 3))
+            fig.tight_layout()
+            plt.savefig(os.path.join(self.plot_path, 'az_residues_swf_vs_azimuth_DC2_v3_{:.3}_zen_{:.3}_{}.png').format(zen_bin_edges[i], zen_bin_edges[i+1], self.layout_name))
+
+            fig, ax = plt.subplots(1, 1, figsize=(15, 6))
+            #ax.errorbar(self.phi_gt[bin_indices == i+1], (self.theta_pred - self.theta_gt)[bin_indices == i+1], yerr=2*self.sig_theta_gt[bin_indices == i+1], fmt='.',  linestyle="none", ms=1, zorder=-1)
+            ax.plot(self.phi_gt[bin_indices == i+1], self.theta_gt[bin_indices == i+1]-self.theta_gt[bin_indices == i+1], 'k-')
+            sc = ax.scatter(self.phi_gt[bin_indices == i+1], (self.theta_swf - self.theta_gt)[bin_indices == i+1], c=self.n_ant[bin_indices == i+1], s=10 )
+            fig.colorbar(sc, label='# antennas')
+            ax.set_title('Zenith residues {:.3}<zen<{:.3}'.format(zen_bin_edges[i], zen_bin_edges[i+1]))
+            ax.set_xlabel('phi_gt')
+            ax.set_ylabel('theta_pred_swf - theta_gt')
+            ax.set_ylim((-1, 1))
+            if 'GP13' in self.layout_name:
+                ax.set_ylim((-3, 3))
+           
+            fig.tight_layout()
+            plt.savefig(os.path.join(self.plot_path, 'zen_residues_swf_vs_azimuth_DC2_v3_{:.3}_zen_{:.3}_{}.png').format(zen_bin_edges[i], zen_bin_edges[i+1], self.layout_name))
+
+
+            fig, ax = plt.subplots(1, 1, figsize=(15, 6))
+            #ax.errorbar(self.phi_gt[bin_indices == i+1], (self.phi_pred - self.phi_gt)[bin_indices == i+1], yerr=3*self.sig_phi_gt[bin_indices == i+1], fmt='.',  linestyle="none", ms=1, zorder=-1)
+            ax.plot(self.phi_gt[bin_indices == i+1], (self.phi_gt-self.phi_gt)[bin_indices == i+1], 'k-')
+
+            sc = ax.scatter(self.phi_gt[bin_indices == i+1], (self.phi_swf - self.phi_gt)[bin_indices == i+1], c=self.d[bin_indices == i+1], s=10 )
+            fig.colorbar(sc, label='distance to center [m]')
+            ax.set_title('Azimuth residues {:.3}<zen<{:.3}'.format(zen_bin_edges[i], zen_bin_edges[i+1]))
+
+            ax.set_xlabel('phi_gt')
+            ax.set_ylabel('phi_pred_swf - phi_gt')
+            ax.set_ylim((-3, 3))
+            ax.set_ylim((-1, 1))
+            fig.tight_layout()
+            plt.savefig(os.path.join(self.plot_path, 'az_residues_swf_vs_azimuth_DC2_vs_coredistance_{:.3}_zen_{:.3}.png').format(zen_bin_edges[i], zen_bin_edges[i+1]))
  
     def plot_scatter_uncertainties(self):
 

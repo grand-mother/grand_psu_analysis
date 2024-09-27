@@ -27,7 +27,7 @@ from grand import (
 from grand import ECEF, Geodetic, GRANDCS, LTP
 
 from matplotlib import rc
-rc('font', size = 20.0)
+rc('font', size=20.0)
 
 
 """
@@ -156,7 +156,7 @@ site = 'gaa'
 
 file_list = glob.glob('/Users/ab212678/Documents/GRAND/data/auger/2024/08/*CD*.root')
 
-output_path = '/Users/ab212678/Documents/GRAND/data/study_gaa_recons/august2024_v1/'
+output_path = '/Users/ab212678/Documents/GRAND/data/study_gaa_recons/august2024_v2/'
 
 for file_gaa in file_list:
 

@@ -13,7 +13,10 @@ import os
 import json
 from scipy.signal import hilbert
 import glob
-import recons_PWF as pwf
+import datetime
+from PWF_reconstruction import recons_PWF as pwf
+from numpy.linalg import LinAlgError
+#import recons_PWF as pwf
 import scipy
 from grid_shape_lib.utils import diff_spec as tale
 # rc('font', **{'family':'serif','serif':['Palatino']})
@@ -23,8 +26,9 @@ rc('font', size = 16.0)
 D2R = np.pi / 180
 R2D = 180 / np.pi
 
+path_1 = ''
 
-gaa_pos = np.loadtxt('./gaa_positions.txt', skiprows=1, usecols=[0, 2, 3, 4, 5, 6])
+gaa_pos = np.loadtxt(os.path.join('/Users/ab212678/Documents/GRAND/Codes/dc2_code_deprecated', './gaa_positions.txt'), skiprows=1, usecols=[0, 2, 3, 4, 5, 6])
 
 plt.figure(1)
 plt.clf()
@@ -36,7 +40,7 @@ plt.xlabel('East [km]')
 plt.ylabel('South [km]')
 plt.tight_layout()
 
-gaa_pos_from_du = np.loadtxt('gaa_position_lonlat.txt', skiprows=1)
+gaa_pos_from_du = np.loadtxt(os.path.join('/Users/ab212678/Documents/GRAND/Codes/dc2_code_deprecated','gaa_position_lonlat.txt'), skiprows=1)
 
 plt.figure(2)
 plt.clf()
@@ -101,6 +105,7 @@ def do_recons_given_list(list_ndu):
         evnum = file.split('_')[-1].split('.')[0]
 
         arr = np.load(file)
+        
         N = []
         W = []
         z = []
@@ -115,24 +120,42 @@ def do_recons_given_list(list_ndu):
             #     y59 = W[-1]
 
         x_ants = np.vstack([N, W, z]).T
+
         x_ants[:, 0] -= x59
         x_ants[:, 1] -= y59
 
         t_antsx = arr[:, 5] * 1e-9
         t_antsy = arr[:, 6] * 1e-9
+        print(t_antsx)
 
         if (t_antsx-t_antsy).std() < 5e-4:
 
             try:
-                theta_x, phi_x = pwf.PWF_simon(x_ants, t_antsx, verbose=False, cr=1.000139, c=pwf.c_light)
+                #theta_x, phi_x = pwf.PWF_(x_ants, t_antsx, verbose=False, cr=1.000139, c=pwf.c_light)
+                theta_x, phi_x = pwf.PWF_semianalytical(x_ants, t_antsx, n=1.000139, c=pwf.c_light)
+
+                #pwf.PWF_(x_ants, t_antsx, verbose=False, cr=1.000139, c=pwf.c_light)
+                
             except ValueError as ve:
                 theta_x, phi_x = (-1, -1)
             try:
-                theta_y, phi_y = pwf.PWF_simon(x_ants, t_antsy, verbose=False, cr=1.000139, c=pwf.c_light)
+                #theta_y, phi_y = pwf.PWF_simon(x_ants, t_antsy, verbose=False, cr=1.000139, c=pwf.c_light)
+                theta_y, phi_y = pwf.PWF_semianalytical(x_ants, t_antsy, n=1.000139, c=pwf.c_light)
             except ValueError as ve:
                 theta_y, phi_y = (-1, -1)
-            cov_x = pwf.Cov_Matrix(theta_x, phi_x, x_ants, cr=1.000139, c=pwf.c_light, sigma=5e-9)
-            cov_y = pwf.Cov_Matrix(theta_y, phi_y, x_ants, cr=1.000139, c=pwf.c_light, sigma=5e-9)
+            print(theta_x, phi_x)
+
+            try:
+                cov_x = pwf.Covariance_schurcomplement(theta_x, phi_x, x_ants, 5e-9, c=pwf.c_light, n=1.000139)
+            except LinAlgError as lae:
+                cov_x = np.array([[1, 0], [0, 1]])
+
+            try:
+                cov_y = pwf.Covariance_schurcomplement(theta_y, phi_y, x_ants, 5e-9, c=pwf.c_light, n=1.000139)
+            except LinAlgError as lae:
+                cov_y = np.array([[1, 0], [0, 1]])
+#            cov_x = pwf.Cov_Matrix(theta_x, phi_x, x_ants, cr=1.000139, c=pwf.c_light, sigma=5e-9)
+            #cov_y = pwf.Cov_Matrix(theta_y, phi_y, x_ants, cr=1.000139, c=pwf.c_light, sigma=5e-9)
 
             zen_x = theta_x * pwf.R2D
             az_x = phi_x * pwf.R2D
