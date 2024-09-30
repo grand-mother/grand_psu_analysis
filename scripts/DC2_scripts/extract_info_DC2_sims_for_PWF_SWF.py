@@ -59,7 +59,7 @@ if __name__ == "__main__":
         print('doing event {}'.format(event_list[i][0]))
         print('loading event')
         d1.get_event(*event_list[i])
-        d1.load_event(*event_list[i])
+        d1.load_event(*event_list[i], ef_l1_mode=False)
 
         print('event loaded')
         ev_stuff = []
@@ -67,14 +67,16 @@ if __name__ == "__main__":
         ev_stuff.append(d1.ev_du_list)
         ev_stuff.append(d1.ev_du_position)
 
-        tmax_l1 = []
-        tmax_l1 = []
+        tmax_ef_l1 = []
+        max_ef_l1 = []
 
-        Emax_l1 = []
-        Emax_l1 = []
+        tmax_tadc_l1 = []
+        max_tadc_l1 = []
+
 
         for du_id in d1.ev_du_list:
             idu = np.where(d1.ev_dus_indices == du_id)[0][0]
+            ### Efield l1
             ef_l1_Hx = np.abs(hilbert(d1.ev_trace_efield_l1[idu, 0]))
             ef_l1_Hy = np.abs(hilbert(d1.ev_trace_efield_l1[idu, 1]))
             ef_l1_Hz = np.abs(hilbert(d1.ev_trace_efield_l1[idu, 2]))
@@ -91,17 +93,43 @@ if __name__ == "__main__":
             Emax_ef_l1_Hy = ef_l1_Hy[imax_ef_l1_Hy]
             Emax_ef_l1_Hz = ef_l1_Hz[imax_ef_l1_Hz]
 
-            tmax_l1.append([tmax_ef_l1_Hx, tmax_ef_l1_Hy, tmax_ef_l1_Hz])
-            Emax_l1.append([Emax_ef_l1_Hx, Emax_ef_l1_Hy, Emax_ef_l1_Hz])
+            tmax_ef_l1.append([tmax_ef_l1_Hx, tmax_ef_l1_Hy, tmax_ef_l1_Hz])
+            max_ef_l1.append([Emax_ef_l1_Hx, Emax_ef_l1_Hy, Emax_ef_l1_Hz])
 
-        ev_stuff.append(np.array(tmax_l1))
-        ev_stuff.append(np.array(Emax_l1))
+            ### tadc L1
+            tadc_l1_Hx = np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 0]))
+            tadc_l1_Hy = np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 1]))
+            tadc_l1_Hz = np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 2]))
+
+            imax_tadc_l1_Hx = np.argmax(tadc_l1_Hx)
+            imax_tadc_l1_Hy = np.argmax(tadc_l1_Hy)
+            imax_tadc_l1_Hz = np.argmax(tadc_l1_Hz)
+
+            tmax_tadc_l1_Hx = d1.ev_trace_ADC_l1_time[imax_tadc_l1_Hx] + d1.ev_t0_adc_l1[idu]
+            tmax_tadc_l1_Hy = d1.ev_trace_ADC_l1_time[imax_tadc_l1_Hy] + d1.ev_t0_adc_l1[idu]
+            tmax_tadc_l1_Hz = d1.ev_trace_ADC_l1_time[imax_tadc_l1_Hz] + d1.ev_t0_adc_l1[idu]
+
+            Emax_tadc_l1_Hx = tadc_l1_Hx[imax_tadc_l1_Hx]
+            Emax_tadc_l1_Hy = tadc_l1_Hy[imax_tadc_l1_Hy]
+            Emax_tadc_l1_Hz = tadc_l1_Hz[imax_tadc_l1_Hz]
+
+            tmax_tadc_l1.append([tmax_tadc_l1_Hx, tmax_tadc_l1_Hy, tmax_tadc_l1_Hz])
+            max_tadc_l1.append([Emax_tadc_l1_Hx, Emax_tadc_l1_Hy, Emax_tadc_l1_Hz])
+
+
+
+        ev_stuff.append(np.array(tmax_ef_l1))
+        ev_stuff.append(np.array(max_ef_l1))
+        ev_stuff.append(np.array(tmax_tadc_l1))
+        ev_stuff.append(np.array(max_tadc_l1))
 
         ev_stuff_arr = np.hstack([
             np.expand_dims(ev_stuff[0], 1),  # ev_du_list
             ev_stuff[1],  # ev_du_position
-            ev_stuff[2],  # tmax_l1
-            ev_stuff[3],  # Emax_l1
+            ev_stuff[2],  # tmax_ef_l1
+            ev_stuff[3],  # max_ef_l1
+            ev_stuff[4],  # tmax_tadc_l1
+            ev_stuff[5]   # max_tadc_l1
         ])
 
         json_file = os.path.join(output_path, '{}.json'.format(d1.event_params["event_number"]))
