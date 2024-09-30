@@ -81,7 +81,8 @@ class Layout_dc2:
         do_noise_timing=True,
         sigma_timing=5e-9,
         is_coreas=False,
-        do_swf=False
+        do_swf=False,
+        qty_to_use='ef'
     ):
         self.du_pos_base = du_pos_base
         self.du_names_base = du_names_base
@@ -109,6 +110,7 @@ class Layout_dc2:
         self.layout_name = layout_name
         self.A_sim = 170 * 1000**2  # m^2
         self.do_swf = do_swf
+        self.qty_to_use = qty_to_use
 
         self.event_res_tab_file = os.path.join(self.plot_path, 'event_res_tab.npy')
         if os.path.isfile(self.event_res_tab_file):
@@ -119,6 +121,7 @@ class Layout_dc2:
 
         self.make_shortcuts()
         self.get_xmax_proxy_laws()
+        
 
     def get_xmax_proxy_laws(self):
         evt = self.event_res_tab
@@ -146,6 +149,7 @@ class Layout_dc2:
 
     def get_global_lists(self):
 
+       
         global_pos_list = []
         np.random.seed(seed=6578)
 
@@ -211,8 +215,17 @@ class Layout_dc2:
             if n_du > 0:
                 ev_du_pos = arr[:, 1:4]
 
-                tmax_3d = arr[:, 4:7] * 1e-9 + np.random.randn(*(arr[:, 4:7].shape)) * self.sigma_timing * self.do_noise_timing
-                Emax_3d = arr[:, 7:10]
+                if self.qty_to_use == 'ef':
+                    times = arr[:, 4:7]
+                    qty = arr[:, 7:10]
+                elif self.qty_to_use == 'tadc':
+                    times = arr[:, 10:13]
+                    qty = arr[:, 13:16]
+                else:
+                    times = arr[:, 345:679]
+
+                tmax_3d = times * 1e-9 + np.random.randn(*(times.shape)) * self.sigma_timing * self.do_noise_timing
+                Emax_3d = qty
 
                 ll = list(np.vstack([np.arange(n_du), np.argmax(Emax_3d, axis=1)]).T)
                 ll = [tuple(l_) for l_ in ll]
@@ -353,8 +366,19 @@ class Layout_dc2:
         n_du = len(ev_du_ids)
         ev_du_pos = arr[:, 1:4]
 
-        tmax_3d = arr[:, 4:7] * 1e-9 + np.random.randn(*(arr[:, 4:7].shape)) * self.sigma_timing * self.do_noise_timing
-        Emax_3d = arr[:, 7:10]
+        if self.qty_to_use == 'ef':
+            times = arr[:, 4:7]
+            qty = arr[:, 7:10]
+            labell = 'ef [muV/m]'
+        elif self.qty_to_use == 'tadc':
+            times = arr[:, 10:13]
+            qty = arr[:, 13:16]
+            labell = 'ADC'
+        else:
+            times = arr[:, 345:679]
+
+        tmax_3d = times * 1e-9 + np.random.randn(*(times.shape)) * self.sigma_timing * self.do_noise_timing
+        Emax_3d = qty
 
         ll = list(np.vstack([np.arange(n_du), np.argmax(Emax_3d, axis=1)]).T)
         ll = [tuple(l_) for l_ in ll]
@@ -371,17 +395,13 @@ class Layout_dc2:
         idx = [idxx[0] for idxx in idx if len(idxx) > 0]
 
         fig = plt.figure(figsize=(10, 6))
-
         plt.plot(-self.du_pos_base[:, 1]/1000, self.du_pos_base[:, 0]/1000, 'k.', alpha=0.2)
         plt.plot(-self.du_pos_base[idx, 1]/1000, self.du_pos_base[idx, 0]/1000, 'k.')
         plt.plot(-self.shc_y[id]/1000, self.shc_x[id]/1000, 'ro')
-
         az = self.phi_gt[id]
         plt.arrow(-self.shc_y[id]/1000, self.shc_x[id]/1000, 1 * -np.sin(np.pi/180*az+np.pi), 1*np.cos(np.pi/180*az+np.pi), zorder=10, width=.1)
         plt.arrow(-self.shc_y[id]/1000, self.shc_x[id]/1000, 5 * -np.sin(np.pi/180*az+np.pi), 5*np.cos(np.pi/180*az+np.pi), zorder=10, width=.1)
         plt.arrow(-self.shc_y[id]/1000, self.shc_x[id]/1000, 8 * -np.sin(np.pi/180*az+np.pi), 8*np.cos(np.pi/180*az+np.pi), zorder=10, width=.1)
-
-
         plt.scatter(-x_ants[:, 1]/1000, x_ants[:, 0]/1000, c=t_ants*1e6, zorder=8)
         plt.colorbar(label='tmax[ms]')
         plt.axis('equal')
@@ -389,7 +409,27 @@ class Layout_dc2:
         plt.ylabel('Northing [km]')
         plt.title('Ev. nu. {}, E={:.3}, Az={:.3}, Zen={:.3}'.format(int(ev_id), self.energy[id], az, self.theta_gt[id])) 
         plt.tight_layout()
-        return fig
+
+        fig2 = plt.figure(figsize=(10, 6))
+        plt.plot(-self.du_pos_base[:, 1]/1000, self.du_pos_base[:, 0]/1000, 'k.', alpha=0.2)
+        plt.plot(-self.du_pos_base[idx, 1]/1000, self.du_pos_base[idx, 0]/1000, 'k.')
+        plt.plot(-self.shc_y[id]/1000, self.shc_x[id]/1000, 'ro')
+        az = self.phi_gt[id]
+        plt.arrow(-self.shc_y[id]/1000, self.shc_x[id]/1000, 1 * -np.sin(np.pi/180*az+np.pi), 1*np.cos(np.pi/180*az+np.pi), zorder=10, width=.1)
+        plt.arrow(-self.shc_y[id]/1000, self.shc_x[id]/1000, 5 * -np.sin(np.pi/180*az+np.pi), 5*np.cos(np.pi/180*az+np.pi), zorder=10, width=.1)
+        plt.arrow(-self.shc_y[id]/1000, self.shc_x[id]/1000, 8 * -np.sin(np.pi/180*az+np.pi), 8*np.cos(np.pi/180*az+np.pi), zorder=10, width=.1)
+        plt.scatter(-x_ants[:, 1]/1000, x_ants[:, 0]/1000, c=Emax[id_above_threshold], zorder=8)
+        plt.colorbar(label=labell)
+        plt.axis('equal')
+        plt.xlabel('Easting [km]')
+        plt.ylabel('Northing [km]')
+        plt.title('Ev. nu. {}, E={:.3}, Az={:.3}, Zen={:.3}'.format(int(ev_id), self.energy[id], az, self.theta_gt[id])) 
+        plt.tight_layout()
+
+
+
+
+        return fig, fig2
 
     def make_plots(self):
         # self.plot_raw_residues()
@@ -397,8 +437,8 @@ class Layout_dc2:
         # self.plot_histogram_raw_residues()
         # self.plot_histrogram_normalized_residues()
         # self.plot_histrogram_normalized_residues_distane_cut()
-        # self.plot_residues_with_error_bars()
-        # self.plot_residues_with_error_bars_zoom()
+        #self.plot_residues_with_error_bars()
+        #self.plot_residues_with_error_bars_zoom()
         # self.plot_scatter_uncertainties()
         #self.plot_events_cores()
         self.plot_layout()
