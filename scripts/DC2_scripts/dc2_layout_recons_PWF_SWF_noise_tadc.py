@@ -69,8 +69,8 @@ def load_all_antennas():
 n_trig_thres = 4
 
 
-data_pwf_swf_nn = '/Users/ab212678/Documents/GRAND/Codes/grand_psu_analysis/dc2_0000_nonoised/'
-data_pwf_swf_nj = '/Users/ab212678/Documents/GRAND/Codes/grand_psu_analysis/dc2_0000_noised/'
+data_pwf_swf_nn = '/Users/ab212678/Documents/GRAND/sims/DC2/DC2Training/files_DC2_ZHAireS-NJ_nonoise_adc/'
+data_pwf_swf_nj = '/Users/ab212678/Documents/GRAND/sims/DC2/DC2Training/files_DC2_ZHAireS_noise_adc/'
 
 
 data_dir_zhaires_nj = '/Users/ab212678/Documents/GRAND/sims/DC2/DC2Training/PWFdata_3june24/Zhaires_NJ'
@@ -186,6 +186,69 @@ lay1_50_5_nj_ef = ldu.Layout_dc2(
 lay1_50_5_nj_ef.make_plots()
 
 
+lay1_30_5_nj_ef = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf_nj, layout_name='all289_nj_30_5_ef',
+    output_dir=output_dir,
+    threshold=30, n_trig_thres=5,
+    do_noise_timing=False,
+    sigma_timing=5e-9, do_swf=False, qty_to_use='ef'
+)
+
+lay1_30_5_nj_ef.make_plots()
+
+
+
+lay1_35_5_nj_ef = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf_nj, layout_name='all289_nj_35_5_ef',
+    output_dir=output_dir,
+    threshold=35, n_trig_thres=5,
+    do_noise_timing=False,
+    sigma_timing=5e-9, do_swf=False, qty_to_use='ef'
+)
+
+lay1_35_5_nj_ef.make_plots()
+
+
+
+
+
+
+lay1_40_5_nj_ef = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf_nj, layout_name='all289_nj_40_5_ef',
+    output_dir=output_dir,
+    threshold=40, n_trig_thres=5,
+    do_noise_timing=False,
+    sigma_timing=5e-9, do_swf=False, qty_to_use='ef'
+)
+
+lay1_40_5_nj_ef.make_plots()
+
+
+
+
+
+lay1_45_5_nj_ef = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf_nj, layout_name='all289_nj_45_5_ef',
+    output_dir=output_dir,
+    threshold=45, n_trig_thres=5,
+    do_noise_timing=False,
+    sigma_timing=5e-9, do_swf=False, qty_to_use='ef'
+)
+
+lay1_45_5_nj_ef.make_plots()
+
+
+
+
+
+
+
+
+
 
 
 lay1_6_5_nn_tadc = ldu.Layout_dc2(
@@ -211,3 +274,28 @@ lay1_6_5_nj_tadc = ldu.Layout_dc2(
 lay1_6_5_nj_tadc.make_plots()
 
 
+
+
+plt.figure(56)
+plt.clf()
+#plt.hist(lay1_25_5_nj_ef.res_phi, bins=30, range=[-3, 3], alpha=0.5, label='25muV/m')
+#plt.hist(lay1_30_5_nj_ef.res_phi, bins=30, range=[-3, 3], alpha=0.5, label='30muV/m')
+#plt.hist(lay1_35_5_nj_ef.res_phi, bins=30, range=[-3, 3], alpha=0.5, label='35muV/m')
+plt.hist(lay1_40_5_nj_ef.res_phi, bins=30, range=[-3, 3], alpha=0.5, label='40muV/m', density=True)
+plt.hist(lay1_45_5_nj_ef.res_phi, bins=30, range=[-3, 3], alpha=0.5, label='45muV/m', density=True)
+plt.hist(lay1_50_5_nj_ef.res_phi, bins=30, range=[-3, 3], alpha=0.5, label='50muV/m', density=True)
+plt.hist(lay1_75_5_nj_ef.res_phi, bins=30, range=[-3, 3], alpha=0.5, label='75muV/m', density=True)
+plt.legend()
+
+
+plt.figure(57)
+plt.clf()
+#plt.hist(lay1_25_5_nj_ef.res_theta, bins=30, range=[-3, 3], alpha=0.5, label='25muV/m')
+#plt.hist(lay1_30_5_nj_ef.res_theta, bins=30, range=[-3, 3], alpha=0.5, label='30muV/m')
+#plt.hist(lay1_35_5_nj_ef.res_theta, bins=30, range=[-3, 3], alpha=0.5, label='35muV/m')
+plt.hist(lay1_40_5_nj_ef.res_theta, bins=30, range=[-3, 3], alpha=0.5, label='40muV/m', density=True)
+plt.hist(lay1_45_5_nj_ef.res_theta, bins=30, range=[-3, 3], alpha=0.5, label='45muV/m', density=True)
+
+plt.hist(lay1_50_5_nj_ef.res_theta, bins=30, range=[-3, 3], alpha=0.5, label='50muV/m', density=True)
+plt.hist(lay1_75_5_nj_ef.res_theta, bins=30, range=[-3, 3], alpha=0.5, label='75muV/m', density=True)
+plt.legend()
