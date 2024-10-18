@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # better plots
 from matplotlib import rc
-
+from scipy import interpolate as interp
 import os
 from grid_shape_lib.modules import masks as masks
 from grand_psu_lib.modules import layout_dc2 as ldu
@@ -113,212 +113,477 @@ ids_infill500 = [201, 170, 138, 106, 75, 215, 187, 154, 124, 91, 63, 203, 172, 1
 
 
 
+lay_289_60_10_ncall50 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='lay289_60_10_13000_ncall50',
+    output_dir=output_dir,
+    threshold=60, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True, ncall=50
+)
+lay_289_60_10_ncall50.make_plots()
 
-### load gp80 positions
 
 
+lay_289_60_10_ncall75 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='lay289_60_10_13000_ncall75',
+    output_dir=output_dir,
+    threshold=60, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True, ncall=75
+)
+lay_289_60_10_ncall75.make_plots()
 
 
-# ### reload the .txt meters and redo the plots to make sure
-# gp300_xy = np.loadtxt('./gp80_positions/gp300_official_position_meters.txt', skiprows=1)
-# gp80_coarse = np.loadtxt('gp80_positions/gp80_coarse_position_meters.txt', skiprows=1)
-# gp80_infill = np.loadtxt('gp80_positions/gp80_infill_position_meters.txt', skiprows=1)
-# gp80_ellip = np.loadtxt('gp80_positions/gp80_elliptical_position_meters.txt', skiprows=1)
-# gp80_hybrid = np.loadtxt('gp80_positions/gp80_hybrid_position_meters.txt', skiprows=1)
-# gp13 = np.loadtxt('gp80_positions/gp13_position_meters.txt', skiprows=1)
+lay_289_60_10_ncall100 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='lay289_60_10_13000_ncall100',
+    output_dir=output_dir,
+    threshold=60, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True, ncall=100
+)
+lay_289_60_10_ncall100.make_plots()
 
 
+lay_289_60_10_ncall150 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='lay289_60_10_13000_ncall150',
+    output_dir=output_dir,
+    threshold=60, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True, ncall=150
+)
+lay_289_60_10_ncall150.make_plots()
 
 
 
+lay_289_60_10_ncall100_lownoise = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='lay289_60_10_13000_ncall100_lownoise',
+    output_dir=output_dir,
+    threshold=60, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=1e-10, do_swf=True, ncall=100
+)
+lay_289_60_10_ncall100_lownoise.make_plots()
 
-# plt.figure(35, figsize=(10, 8))
-# plt.clf()
-# plt.plot(-gp300_xy[:, 1], gp300_xy[:, 0], 'co', ms=7, alpha=0.4, label='GP300')
-# plt.plot(-gp80_coarse[:, 1], gp80_coarse[:, 0], 'k*', ms=10, alpha=0.4, label='GP80 coarse')
-# plt.plot(-gp80_ellip[:, 1], gp80_ellip[:, 0], 'bo', ms=12, fillstyle='none', label='GP80 elliptic')
-# plt.plot(-gp80_hybrid[:, 1], gp80_hybrid[:, 0], 'orange', ls = 'None', marker='.', ms=11, label='GP80 hybrid')
-# plt.plot(-gp80_infill[:, 1], gp80_infill[:, 0], 'rh', ms=2, label='GP80 infill')
-# plt.plot(-gp13[:, 2], gp13[:, 1], 'gh', ms=2, label='GP13')
-# #for i in range(10):
-# #    plt.text(-xy_coords.y[i], xy_coords.x[i], '{}'.format(int(coords_data[i, 0])))
-# plt.xlabel('Easting [m]')
-# plt.ylabel('Northing [m]')
-# plt.title('GP300 and GP80 candidates positions ')
-# plt.axis('equal')
-# plt.legend()
-# plt.tight_layout()
 
 
 
 
-def get_sublayout_names(sublayout_pos, main_lay_pos, main_lay_names):
-    ids = []
-    for pos in sublayout_pos:
-        ids.append(int(masks.get_closest_antenna(pos[0], pos[1], main_lay_pos[:, 0:2].T )))
 
-    return list(np.int32(main_lay_names[ids]))
+lay_289_60_10_ncall200 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='lay289_60_10_13000_ncall200',
+    output_dir=output_dir,
+    threshold=60, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True, ncall=200
+)
+lay_289_60_10_ncall200.make_plots()
 
 
 
-# names_gp13 = get_sublayout_names(gp13[:, 1:3], du_pos_all_gp300p, du_names_all_gp300p)
-# names_ellip = get_sublayout_names(gp80_ellip, du_pos_all_gp300p, du_names_all_gp300p)
-# names_coarse = get_sublayout_names(gp80_coarse, du_pos_all_gp300p, du_names_all_gp300p)
-# names_hybrid = get_sublayout_names(gp80_hybrid, du_pos_all_gp300p, du_names_all_gp300p)
-# names_infill = get_sublayout_names(gp80_infill, du_pos_all_gp300p, du_names_all_gp300p)
+lay_289_60_10_ncall200_lownoise = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='lay289_60_10_13000_ncall200_lownoise',
+    output_dir=output_dir,
+    threshold=60, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=1e-10, do_swf=True, ncall=200
+)
+lay_289_60_10_ncall200_lownoise.make_plots()
 
 
 
 
-# lay_gp13_ingp300_all_75_4 = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp13_ingp300_all_75_4',
-#     output_dir=output_dir,
-#     du_names=names_gp13,
-#     threshold=75, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp13_ingp300_all_75_4.make_plots()
-
-
-
-
-# lay_gp80ellip_ingp300_all_75_4_all = ldu.Layout_dc2(
-#         du_pos_all_gp300p, du_names_all_gp300p,
-#         data_dir_GP300_Paul_all, layout_name='gp80ellip_ingp300_all_75_4_all',
-#         output_dir=output_dir,
-#         du_names=names_ellip,
-#         threshold=75, n_trig_thres=4,
-#         do_noise_timing=True,
-#         sigma_timing=5e-9
-# )
-# lay_gp80ellip_ingp300_all_75_4_all.make_plots()
-
-
-# lay_gp80hybrid_ingp300_all_75_4_all = ldu.Layout_dc2(
-#         du_pos_all_gp300p, du_names_all_gp300p,
-#         data_dir_GP300_Paul_all, layout_name='gp80hybrid_ingp300_all_75_4_all',
-#         output_dir=output_dir,
-#         du_names=names_hybrid,
-#         threshold=75, n_trig_thres=4,
-#         do_noise_timing=True,
-#         sigma_timing=5e-9
-# )
-# lay_gp80hybrid_ingp300_all_75_4_all.make_plots()
-
-
-
-
-# lay_gp80ellip_ingp300_all_75_4 = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp80ellip_ingp300_all_75_4',
-#     output_dir=output_dir,
-#     du_names=names_ellip,
-#     threshold=75, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp80ellip_ingp300_all_75_4.make_plots()
-
-# lay_gp80coarse_ingp300_all_75_4 = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp80coarse_ingp300_all_75_4',
-#     output_dir=output_dir,
-#     du_names=names_coarse,
-#     threshold=75, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp80coarse_ingp300_all_75_4.make_plots()
-
-
-
-
-
-# lay_gp80hybrid_ingp300_all_75_4 = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp80hybrid_ingp300_all_75_4',
-#     output_dir=output_dir,
-#     du_names=names_hybrid,
-#     threshold=75, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp80hybrid_ingp300_all_75_4.make_plots()
-
-
-
-
-# lay_gp80infill_ingp300_all_75_4 = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp80infill_ingp300_all_75_4',
-#     output_dir=output_dir,
-#     du_names=names_infill,
-#     threshold=75, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp80infill_ingp300_all_75_4.make_plots()
-
-
-
-
-
-
-
-
-# lay_gp80ellip_ingp300_all_30_4 = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp80ellip_ingp300_all_30_4',
-#     output_dir=output_dir,
-#     du_names=names_ellip,
-#     threshold=30, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp80ellip_ingp300_all_30_4.make_plots()
-
-
-# lay_gp80hybrid_ingp300_all_30_4 = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp80hybrid_ingp300_all_30_4',
-#     output_dir=output_dir,
-#     du_names=names_hybrid,
-#     threshold=30, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp80hybrid_ingp300_all_30_4.make_plots()
-
-
-
-
-
-
-
-
-
-# lay_gp300p_all_75_4_NJ = ldu.Layout_dc2(
-#     du_pos_all_gp300p, du_names_all_gp300p,
-#     data_dir_GP300_Paul, layout_name='gp300p_all_NJ_75_4',
-#     output_dir=output_dir,
-#     threshold=75, n_trig_thres=4,
-#     do_noise_timing=True,
-#     sigma_timing=5e-9
-# )
-# #lay_gp300p_all_75_4_NJ.make_plots()
-
-
-# lay1_100_6_NJ = ldu.Layout_dc2(
+# lay_289_50_10_ncall400 = ldu.Layout_dc2(
 #     du_pos_all, du_names_all,
-#     data_pwf_swf, layout_name='all289_NJ_100_6_new_v2',
+#     data_pwf_swf, layout_name='lay289_50_10_1000_ncall400',
 #     output_dir=output_dir,
-#     threshold=100, n_trig_thres=6,
+#     threshold=50, n_trig_thres=10,
 #     do_noise_timing=True,
-#     sigma_timing=5e-9
+#     sigma_timing=5e-9, do_swf=True, ncall=400
 # )
-# evt = lay1_100_6_NJ.event_res_tab
+# lay_289_50_10_ncall400.make_plots()
+
+
+
+
+
+
+def thetaphi_to_k(theta, phi):
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    cp = np.cos(phi)
+    sp = np.sin(phi)
+    K =  - np.array([st*cp, st*sp, ct])
+    return K
+
+def k_to_theta_phi(k):
+    theta = np.arccos(-k[2])
+    cp = - k[0]/np.sin(theta)
+    sp = - k[1]/np.sin(theta)
+    phi = np.arctan2(sp, cp)
+    # if phi < 0:
+    #     phi += 2 * np.pi
+    return theta, phi
+
+#######################################################
+##### plot proxy laws for swf initial guess ###########
+#######################################################
+
+lay1 = lay_289_60_10_ncall100
+evt = lay1.event_res_tab
+
+binned_xmax_z = ldu.bin_array(evt[:, 2], evt[:, 18], lay1.zen_bins_limits)
+d2d_max = np.sqrt((evt[:, 17] - 0*evt[:, 5])**2 + (evt[:, 16] - 0*evt[:, 4])**2)
+
+
+
+
+    
+
+plt.figure(98)
+plt.clf()
+plt.plot(lay1.event_res_tab[:, 2], d2d_max/1000, 'k.', ms=1, alpha=0.2)    
+plt.plot(lay1.zen_bins_centers, lay1.binned_dmax[0]/1000 )
+plt.xlim(25, 90)
+plt.xlabel('Zenith [deg]')
+plt.ylabel('2d distance to Xmax [km]')
+plt.yscale('log')
+plt.tight_layout()
+plt.savefig('./proxy_d2_dxmax.png')
+
+
+plt.figure(99)
+plt.clf()
+plt.plot(lay1.event_res_tab[:, 2], lay1.event_res_tab[:, 18]/1000, 'k.', ms=1, alpha=0.2)    
+plt.plot(lay1.zen_bins_centers, lay1.binned_xmax_z[0]/1000 )
+plt.xlabel('Zenith [deg]')
+plt.ylabel('Xmax altitude [km]')
+plt.xlim(25, 90)
+plt.tight_layout()
+plt.savefig('./proxy_xmax_z.png')
+
+
+
+
+
+
+
+
+
+core_alt = 1264
+
+
+# event_res_tab[k, 24] = swf_fit_v2[0]
+# event_res_tab[k, 25] = swf_fit_v2[1]
+# event_res_tab[k, 26] = swf_fit_v2[2]
+
+
+# event_res_tab[k, 4] = np.float32(event_params['shower_core_x'])
+# event_res_tab[k, 5] = np.float32(event_params['shower_core_y'])
+
+lay1 = lay_289_60_10_ncall50
+lay2 = lay_289_60_10_ncall75
+lay3 = lay_289_60_10_ncall100
+lay4 = lay_289_60_10_ncall150
+lay5 = lay_289_60_10_ncall200
+
+lay6 = lay_289_60_10_ncall100_lownoise
+lay7 = lay_289_60_10_ncall200_lownoise
+
+evt1 = lay1.event_res_tab
+evt2 = lay2.event_res_tab
+evt3 = lay3.event_res_tab
+evt4 = lay4.event_res_tab
+evt5 = lay5.event_res_tab
+
+
+idd1 = np.where(evt1[:, 19]!= -1)[0]
+
+plt.figure(34567)
+plt.clf()
+plt.scatter(evt1[idd1, 16]/1000, evt1[idd1, 35]/1000, s=3, label='ncall=50')
+plt.scatter(evt2[idd1, 16]/1000, evt2[idd1, 35]/1000, s=3, label='ncall=75')
+plt.scatter(evt3[idd1, 16]/1000, evt3[idd1, 35]/1000, s=3, label='ncall=100')
+plt.scatter(evt4[idd1, 16]/1000, evt4[idd1, 35]/1000, s=3, label='ncall=150')
+plt.scatter(evt5[idd1, 16]/1000, evt5[idd1, 35]/1000, s=3, label='ncall=200')
+
+
+plt.figure(34567)
+plt.clf()
+plt.scatter(evt1[idd1, 18]/1000, evt1[idd1, 37]/1000, s=3, label='ncall=50')
+plt.scatter(evt2[idd1, 18]/1000, evt2[idd1, 37]/1000, s=3, label='ncall=75')
+plt.scatter(evt3[idd1, 18]/1000, evt3[idd1, 37]/1000, s=3, label='ncall=100')
+plt.scatter(evt4[idd1, 18]/1000, evt4[idd1, 37]/1000, s=3, label='ncall=150')
+plt.scatter(evt5[idd1, 18]/1000, evt5[idd1, 37]/1000, s=3, label='ncall=200')
+
+
+plt.figure(34560)
+plt.clf()
+plt.hist(evt1[idd1, 37]/1000, bins=40, range=(0, 20), label='ncall=50')
+plt.hist(evt2[idd1, 37]/1000, bins=40, range=(0, 20), label='ncall=50')
+plt.hist(evt3[idd1, 37]/1000, bins=40, range=(0, 20), label='ncall=50')
+plt.hist(evt4[idd1, 37]/1000, bins=40, range=(0, 20), label='ncall=50')
+plt.hist(evt5[idd1, 37]/1000, bins=40, range=(0, 20), label='ncall=50')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+idd1 = np.where(evt1[:, 19]!= -1)[0]
+plt.figure(500)
+plt.clf()
+
+plt.plot(evt1[idd1, 16]/1000, evt1[idd1, 16]/1000, 'k-')
+
+plt.scatter(evt1[idd1, 16]/1000, evt1[idd1, 19]/1000, c='g', s=3, label='swf 4d')
+plt.scatter(evt1[idd1, 16]/1000, evt1[idd1, 24]/1000, c='c', s=3, label='swf 3d xmax')
+plt.scatter(evt1[idd1, 16]/1000, evt1[idd1, 35]/1000, c='m', s=3, label='swf 3d xmax/2')
+
+plt.title('ncall = 50')
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.ylabel('Reconstructed x_eff [km]')
+plt.tight_layout()
+##############################
+
+
+
+idd2 = np.where(evt2[:, 19]!= -1)[0]
+plt.figure(501)
+plt.clf()
+
+plt.plot(evt2[idd2, 16]/1000, evt2[idd2, 16]/1000, 'k-')
+
+plt.scatter(evt2[idd2, 16]/1000, evt2[idd2, 19]/1000, c='g', s=3, label='swf 4d')
+plt.scatter(evt2[idd2, 16]/1000, evt2[idd2, 24]/1000, c='c', s=3, label='swf 3d xmax')
+plt.scatter(evt2[idd2, 16]/1000, evt2[idd2, 35]/1000, c='m', s=3, label='swf 3d xmax/2')
+plt.title('ncall = 75')
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.tight_layout()
+
+
+idd3 = np.where(evt3[:, 19]!= -1)[0]
+plt.figure(502)
+plt.clf()
+
+plt.plot(evt3[idd3, 16]/1000, evt3[idd3, 16]/1000, 'k-')
+
+plt.scatter(evt3[idd3, 16]/1000, evt3[idd3, 19]/1000, c='g', s=3, label='swf 4d')
+plt.scatter(evt3[idd3, 16]/1000, evt3[idd3, 24]/1000, c='c', s=3, label='swf 3d xmax')
+plt.scatter(evt3[idd3, 16]/1000, evt3[idd3, 35]/1000, c='m', s=3, label='swf 3d xmax/2')
+plt.title('ncall = 100')
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.tight_layout()
+
+
+
+
+idd4 = np.where(evt4[:, 19]!= -1)[0]
+plt.figure(503)
+plt.clf()
+
+plt.plot(evt4[idd4, 16]/1000, evt4[idd4, 16]/1000, 'k-')
+
+plt.scatter(evt4[idd4, 16]/1000, evt4[idd4, 19]/1000, c='g', s=3, label='swf 4d')
+plt.scatter(evt4[idd4, 16]/1000, evt4[idd4, 24]/1000, c='c', s=3, label='swf 3d xmax')
+plt.scatter(evt4[idd4, 16]/1000, evt4[idd4, 35]/1000, c='m', s=3, label='swf 3d xmax/2')
+plt.title('ncall = 150')
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.tight_layout()
+
+
+
+idd5 = np.where(evt5[:, 19]!= -1)[0]
+plt.figure(504)
+plt.clf()
+
+plt.plot(evt5[idd5, 16]/1000, evt5[idd5, 16]/1000, 'k-')
+
+plt.scatter(evt5[idd5, 16]/1000, evt5[idd5, 19]/1000, c='g', s=3, label='swf 4d')
+plt.scatter(evt5[idd5, 16]/1000, evt5[idd5, 24]/1000, c='c', s=3, label='swf 3d xmax')
+plt.scatter(evt5[idd5, 16]/1000, evt5[idd5, 35]/1000, c='m', s=3, label='swf 3d xmax/2')
+plt.title('ncall = 200')
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.tight_layout()
+
+
+
+
+
+
+
+
+
+
+plt.figure(4556)
+plt.clf()
+plt.hist(100*(lay5.deff3dv2/lay5.dmax -1), bins=40, range =[-50, 100], histtype='step')
+plt.hist(100*(lay5.deff3dv1/lay5.dmax -1), bins=40, range =[-50, 100], histtype='step')
+
+plt.hist(100*(lay4.deff3dv2/lay4.dmax -1), bins=40, range =[-50, 100], histtype='step')
+plt.hist(100*(lay4.deff3dv1/lay4.dmax -1), bins=40, range =[-50, 100], histtype='step')
+
+plt.hist(100*(lay3.deff3dv2/lay3.dmax -1), bins=20, range =[-50, 100], histtype='step')
+plt.hist(100*(lay3.deff3dv1/lay3.dmax -1), bins=20, range =[-50, 100], histtype='step')
+
+plt.hist(100*(lay2.deff3dv2/lay2.dmax -1), bins=20, range =[-50, 100], histtype='step')
+plt.hist(100*(lay2.deff3dv1/lay2.dmax -1), bins=20, range =[-50, 100], histtype='step')
+plt.hist(100*(lay1.deff3dv2/lay2.dmax -1), bins=20, range =[-50, 100], histtype='step')
+plt.hist(100*(lay1.deff3dv1/lay2.dmax -1), bins=20, range =[-50, 100], histtype='step')
+
+
+
+
+
+plt.figure(454)
+plt.clf()
+plt.hist(100*(lay7.deff3dv2/lay7.dmax -1), bins=20, range =[-50, 100], histtype='step')
+plt.hist(100*(lay7.deff3dv1/lay7.dmax -1), bins=20, range =[-50, 100], histtype='step')
+
+plt.hist(100*(lay6.deff3dv2/lay6.dmax -1), bins=20, range =[-50, 100], histtype='step')
+plt.hist(100*(lay6.deff3dv1/lay6.dmax -1), bins=20, range =[-50, 100], histtype='step')
+
+
+
+
+plt.figure(101)
+plt.clf()
+plt.hist(lay1.res_phi, bins=50, range=[-3, 3], histtype='step',  label='PWF', density=True)
+plt.hist(lay2.res_phi, bins=50, range=[-3, 3], histtype='step',  label='PWF', density=True)
+plt.hist(evt1[idd1, 23]-evt1[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 4d', density=True)
+plt.hist(evt1[idd1, 28]-evt1[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 3d xmax', density=True)
+plt.hist(evt1[idd1, 39]-evt1[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 3d xmax/2', density=True)
+plt.legend()
+plt.xlabel('Azimuth residues [deg]')
+plt.ylabel('# events')
+plt.tight_layout()
+
+plt.figure(102)
+plt.clf()
+plt.hist(lay2.res_phi, bins=50, range=[-3, 3], histtype='step',  label='PWF', density=True)
+plt.hist(evt2[idd1, 23]-evt2[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 4d', density=True)
+plt.hist(evt2[idd1, 28]-evt2[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 3d xmax', density=True)
+plt.hist(evt2[idd1, 39]-evt2[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 3d xmax/2', density=True)
+plt.legend()
+plt.xlabel('Azimuth residues [deg]')
+plt.ylabel('# events')
+plt.tight_layout()
+
+plt.figure(103)
+plt.clf()
+plt.hist(lay3.res_phi, bins=50, range=[-3, 3], histtype='step',  label='PWF', density=True)
+plt.hist(evt3[idd1, 23]-evt3[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 4d', density=True)
+plt.hist(evt3[idd1, 28]-evt3[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 3d xmax', density=True)
+plt.hist(evt3[idd1, 39]-evt3[idd1, 3], bins=50, range=[-3, 3], histtype='step', label='SWF 3d xmax/2', density=True)
+plt.legend()
+plt.xlabel('Azimuth residues [deg]')
+plt.ylabel('# events')
+plt.tight_layout()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+lay = lay_289_50_10_ncall50_ct_lown
+evt = lay.event_res_tab
+
+
+idd = np.where(evt[:, 19]!= -1)[0]
+plt.figure(498)
+plt.clf()
+
+plt.plot(evt[idd, 16]/1000, evt[idd, 16]/1000, 'k-')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 19]/1000, c='g', s=3, label='swf_fit1')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 24]/1000, c='c', s=3, label='swf_fit2')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 30]/1000, c='m', s=3, label='xeff')
+
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.tight_layout()
+
+
+
+lay = lay_289_50_10_ncall50_v2
+evt = lay.event_res_tab
+
+
+idd = np.where(evt[:, 19]!= -1)[0]
+plt.figure(501)
+plt.clf()
+
+plt.plot(evt[idd, 16]/1000, evt[idd, 16]/1000, 'k-')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 19]/1000, c='g', s=3, label='swf_fit1')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 24]/1000, c='c', s=3, label='swf_fit2')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 30]/1000, c='m', s=3, label='xeff')
+
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.tight_layout()
+
+
+
+
+
+
+lay = lay_289_50_10_ncall75_v2
+evt = lay.event_res_tab
+
+
+idd = np.where(evt[:, 19]!= -1)[0]
+plt.figure(502)
+plt.clf()
+
+plt.plot(evt[idd, 16]/1000, evt[idd, 16]/1000, 'k-')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 19]/1000, c='g', s=3, label='swf_fit1')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 24]/1000, c='c', s=3, label='swf_fit2')
+plt.scatter(evt[idd, 16]/1000, evt[idd, 30]/1000, c='m', s=3, label='xeff')
+
+plt.legend()
+plt.xlabel('xmax_x [km]')
+plt.tight_layout()
+
+
+
+
 
 
 
@@ -353,13 +618,201 @@ lay1_75_5_NJ = ldu.Layout_dc2(
 lay1_75_5_NJ.make_plots()
 
 
+lay1_75_5_NJ_v2 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='all289_NJ_75_5_all13000_v2',
+    output_dir=output_dir,
+    threshold=75, n_trig_thres=5,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True
+)
+lay1_75_5_NJ_v2.make_plots()
+
+
+lay1_75_10_NJ_v2 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='all289_NJ_75_10_all13000_v2',
+    output_dir=output_dir,
+    threshold=75, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True
+)
+lay1_75_10_NJ_v2.make_plots()
+
+
+lay1_75_10_NJ_v2_ncall400 = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='all289_NJ_75_10_all13000_v2_ncall400',
+    output_dir=output_dir,
+    threshold=75, n_trig_thres=10,
+    do_noise_timing=True,
+    sigma_timing=5e-9, do_swf=True
+)
+lay1_75_10_NJ_v2_ncall400.make_plots()
 
 
 
-plt.figure(1)
+lay1_75_5_NJ_v2_lownoise = ldu.Layout_dc2(
+    du_pos_all, du_names_all,
+    data_pwf_swf, layout_name='all289_NJ_75_5_all13000_v2_lownoise',
+    output_dir=output_dir,
+    threshold=75, n_trig_thres=5,
+    do_noise_timing=True,
+    sigma_timing=5e-12, do_swf=True
+)
+lay1_75_5_NJ_v2_lownoise.make_plots()
+
+
+
+idd = np.where(lay1_75_5_NJ_v2.event_res_tab[:, 19]!= -1)[0]
+plt.figure(6789)
 plt.clf()
-plt.hist(lay1_75_5_NJ.res_phi, bins=50, range=[-3, 3], histtype='step',  label='PWF')
-plt.hist(lay1_75_5_NJ.res_phi_swf, bins=50, range=[-3, 3], histtype='step', label='SWF ncall400')
+plt.scatter(lay1_75_5_NJ_v2.event_res_tab[idd, 16], lay1_75_5_NJ_v2.event_res_tab[idd, 19], c='g', s=3)
+plt.scatter(lay1_75_5_NJ_v2.event_res_tab[idd, 16], lay1_75_5_NJ_v2.event_res_tab[idd, 16], c='k', s=2)
+plt.scatter(lay1_75_5_NJ_v2.event_res_tab[idd, 16], lay1_75_5_NJ_v2.event_res_tab[idd, 24], c='c', s=2)
+plt.scatter(lay1_75_5_NJ_v2.event_res_tab[idd, 16], lay1_75_5_NJ_v2.event_res_tab[idd, 27], c='m', s=2)
+
+
+
+### load the xmax proxies if they exist
+path_ = '/Users/ab212678/Documents/GRAND/sims/DC2/DC2Training/PWF_SWF_data/'
+if os.path.isfile(os.path.join(path_, 'zen_bin_centers.npy')):
+    zen_bins_centers = np.load(os.path.join(path_, 'zen_bin_centers.npy'))
+    binned_xmax_z = np.load(os.path.join(path_, 'binned_xmax_z_75_4.npy'))
+    binned_dmax = np.load(os.path.join(path_, 'binned_dmax_75_4.npy'))
+
+interp_xmax_z = interp.interp1d(zen_bins_centers, binned_xmax_z)
+interp_dmax = interp.interp1d(zen_bins_centers, binned_dmax)
+
+
+idd = np.where(lay1_75_10_NJ_v2.event_res_tab[:, 19]!= -1)[0]
+theta_pred = lay1_75_10_NJ_v2.event_res_tab[idd, 10]
+phi_pred = lay1_75_10_NJ_v2.event_res_tab[idd, 11]
+
+xmaxz = interp_xmax_z(theta_pred)
+dmax = interp_dmax(theta_pred)
+
+xeff = np.cos(phi_pred*D2R) * dmax
+yeff = np.sin(phi_pred*D2R) * dmax
+zeff = xmaxz
+
+
+idd = np.where(lay1_75_10_NJ_v2.event_res_tab[:, 19]!= -1)[0]
+plt.figure(670)
+plt.clf()
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 16], lay1_75_10_NJ_v2.event_res_tab[idd, 19], c='g', s=3)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 16], lay1_75_10_NJ_v2.event_res_tab[idd, 16], c='k', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 16], lay1_75_10_NJ_v2.event_res_tab[idd, 24], c='c', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 16], lay1_75_10_NJ_v2.event_res_tab[idd, 27], c='m', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 16], xeff, c='r', s=2)
+
+
+
+idd = np.where(lay1_75_10_NJ_v2.event_res_tab[:, 19]!= -1)[0]
+plt.figure(671)
+plt.clf()
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 17], lay1_75_10_NJ_v2.event_res_tab[idd, 20], c='g', s=3)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 17], lay1_75_10_NJ_v2.event_res_tab[idd, 17], c='k', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 17], lay1_75_10_NJ_v2.event_res_tab[idd, 25], c='c', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 17], lay1_75_10_NJ_v2.event_res_tab[idd, 28], c='m', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 17], yeff, c='r', s=2)
+
+
+
+
+idd = np.where(lay1_75_10_NJ_v2.event_res_tab[:, 19]!= -1)[0]
+plt.figure(672)
+plt.clf()
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 18], lay1_75_10_NJ_v2.event_res_tab[idd, 21], c='g', s=3)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 18], lay1_75_10_NJ_v2.event_res_tab[idd, 18], c='k', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 18], lay1_75_10_NJ_v2.event_res_tab[idd, 26], c='c', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 18], lay1_75_10_NJ_v2.event_res_tab[idd, 29], c='m', s=2)
+plt.scatter(lay1_75_10_NJ_v2.event_res_tab[idd, 18], zeff, c='r', s=2)
+
+
+
+
+
+idd = np.where(lay1_75_10_NJ_v2_ncall400.event_res_tab[:, 19]!= -1)[0]
+plt.figure(680)
+plt.clf()
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 16], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 19], c='g', s=3)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 16], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 16], c='k', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 16], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 24], c='c', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 16], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 27], c='m', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 16], xeff, c='r', s=2)
+
+
+
+idd = np.where(lay1_75_10_NJ_v2_ncall400.event_res_tab[:, 19]!= -1)[0]
+plt.figure(681)
+plt.clf()
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 20], c='g', s=3)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17], c='k', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 25], c='c', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 28], c='m', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17], yeff, c='r', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 17]/2, c='k', s=2)
+
+
+
+
+idd = np.where(lay1_75_10_NJ_v2_ncall400.event_res_tab[:, 19]!= -1)[0]
+plt.figure(682)
+plt.clf()
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 18], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 21], c='g', s=3)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 18], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 18], c='k', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 18], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 26], c='c', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 18], lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 29], c='m', s=2)
+plt.scatter(lay1_75_10_NJ_v2_ncall400.event_res_tab[idd, 18], zeff, c='r', s=2)
+
+
+
+
+
+
+
+
+
+
+
+idd = np.where(lay1_75_5_NJ_v2_lownoise.event_res_tab[:, 19]!= -1)[0]
+plt.figure(6790)
+plt.clf()
+plt.scatter(lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 16], lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 19], c='g', s=3)
+plt.scatter(lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 16], lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 16], c='k', s=2)
+plt.scatter(lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 16], lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 24], c='c', s=2)
+plt.scatter(lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 16], lay1_75_5_NJ_v2_lownoise.event_res_tab[idd, 27], c='m', s=2)
+
+
+
+
+
+
+plt.scatter(lay1_75_5_NJ_v2.event_res_tab[idd, 16], lay1_75_5_NJ_v2.event_res_tab[idd, 24], c=lay1_75_5_NJ_v2.event_res_tab[idd, 9], vmax = 10)
+
+plt.scatter(lay1_75_5_NJ.event_res_tab[idd, 16], lay1_75_5_NJ.event_res_tab[idd, 19], c='c', s=3)
+plt.scatter(lay1_75_5_NJ_ncall200.event_res_tab[idd, 16], lay1_75_5_NJ_ncall200.event_res_tab[idd, 19], c='m', s=3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+plt.figure(100)
+plt.clf()
+plt.hist(lay1_75_5_NJ.res_phi, bins=50, range=[-3, 3], histtype='step',  label='PWF', density=True)
+plt.hist(lay1_75_5_NJ.res_phi_swf, bins=50, range=[-3, 3], histtype='step', label='SWF ncall400', density=True)
+plt.hist(lay1_75_5_NJ_v2.res_phi_swf, bins=50, range=[-3, 3], histtype='step', label='SWF  v2 ncall200', density=True)
+
 #plt.hist(lay1_75_5_NJ_ncall200.res_phi_swf, bins=50, range=[-3, 3], histtype='step', label='SWF ncall200')
 #plt.hist(lay1_75_5_NJ_ncall100.res_phi_swf, bins =50, range=[-3, 3], alpha=0.4, label='SWF ncall100')
 plt.legend()
@@ -370,7 +823,7 @@ plt.savefig('comp_swf_pwf_azimuth.png')
 
 
 
-plt.figure(2)
+plt.figure(2000)
 plt.clf()
 plt.hist(lay1_75_5_NJ.res_theta, bins=50, range=[-3, 3], histtype='step',  label='PWF')
 plt.hist(lay1_75_5_NJ.res_theta_swf, bins=50, range=[-3, 3], histtype='step', label='SWF ncall400')
@@ -383,10 +836,13 @@ plt.tight_layout()
 plt.savefig('comp_swf_pwf_zenith.png')
 
 
-plt.figure()
+plt.figure(3000)
+plt.clf()
 plt.plot(lay1_75_5_NJ.n_ant, lay1_75_5_NJ_ncall100.res_theta_swf, 'g.', label='ncall=100')
 plt.plot(lay1_75_5_NJ.n_ant, lay1_75_5_NJ_ncall200.res_theta_swf, 'b.', label='ncall=200')
 plt.plot(lay1_75_5_NJ.n_ant, lay1_75_5_NJ.res_theta_swf, 'r.', label='ncall=400')
+plt.plot(lay1_75_5_NJ_v2.n_ant, lay1_75_5_NJ_v2.res_theta_swf, 'c.', label='v2,  ncall=200')
+
 plt.legend()
 plt.xlabel('N antennas')
 plt.ylabel('zenith residues [deg]')
@@ -450,13 +906,13 @@ plt.plot(zen_bins_centers, res18[0], 'b-')
 plt.plot(zen_bins_centers, res18_trigged[0], 'g-')
 plt.title('xmax altitude vs zenith')
 plt.xlabel('zenith [deg]')
-plt.ylabel('xmax_z [m]')
+plt.ylabel('xmax altitude [m]')
 plt.tight_layout()
 plt.savefig('xmax_z_vs_zenith.png')
 
 
 
-d2d_max = np.sqrt((evt[:, 17] - evt[:, 5])**2 + (evt[:, 16] - evt[:, 4])**2)
+d2d_max = np.sqrt((evt[:, 17] - 0*evt[:, 5])**2 + (evt[:, 16] - 0*evt[:, 4])**2)
 plt.figure(3)
 plt.clf()
 plt.scatter(evt[:, 2], evt[:, 3], c=d2d_max)
@@ -465,7 +921,7 @@ plt.xlabel('zenith [deg]')
 plt.ylabel('azimuth [deg]')
 plt.colorbar(label='d2d_max [m]')
 
-d2d_max = np.sqrt((evt[:, 17] - evt[:, 5])**2 + (evt[:, 16] - evt[:, 4])**2)
+d2d_max = np.sqrt((evt[:, 17] - 0*evt[:, 5])**2 + (evt[:, 16] - 0*evt[:, 4])**2)
 res_dmax = bin_array(evt[:, 2], d2d_max, zen_bins)
 res_dmax_trigged = bin_array(evt[is_trigged, 2], d2d_max[is_trigged], zen_bins)
 
@@ -526,7 +982,7 @@ plt.savefig('dmax_vs_zenith.png')
     # binning1 = Binning()
 
 
-    # lay_gaa_75_3_CC = ldu.Layout_dc2(
+    # lay_gaa_75_3_Cc=ldu.Layout_dc2(
     #     du_pos_all_gaa, du_names_all_gaa,
     #     data_gaa, layout_name='gaa_NJ_75_3_CC',
     #     output_dir=output_dir,
@@ -537,7 +993,7 @@ plt.savefig('dmax_vs_zenith.png')
     # #lay_gaa_75_3_CC.make_plots()
 
 
-    # lay_gaa_75_3_nCC = ldu.Layout_dc2(
+    # lay_gaa_75_3_nCc=ldu.Layout_dc2(
     #     du_pos_all_gaa, du_names_all_gaa,
     #     data_gaa, layout_name='gaa_NJ_75_3_nCC',
     #     threshold=75, n_trig_thres=3,

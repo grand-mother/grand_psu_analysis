@@ -14,6 +14,8 @@ from scipy import interpolate as interp
 from grid_shape_lib.utils import diff_spec as tale
 from grid_shape_lib.modules import hexy
 import wavefronts_swf as swf
+#import wavefronts_swf_dev as swfdev
+
 
 
 # rc('font', **{'family':'serif','serif':['Palatino']})
@@ -82,6 +84,7 @@ class Layout_dc2:
         sigma_timing=5e-9,
         is_coreas=False,
         do_swf=False,
+        ncall=100,
         qty_to_use='ef'
     ):
         self.du_pos_base = du_pos_base
@@ -110,18 +113,24 @@ class Layout_dc2:
         self.layout_name = layout_name
         self.A_sim = 170 * 1000**2  # m^2
         self.do_swf = do_swf
+        self.ncall = ncall
         self.qty_to_use = qty_to_use
-
+        self.core_alt = 1264
         self.event_res_tab_file = os.path.join(self.plot_path, 'event_res_tab.npy')
+        self.event_global_pos_file = os.path.join(self.plot_path, 'event_global_pos.npy')
+        self.event_chi2tab_file = os.path.join(self.plot_path, 'event_chi2tab.npy')
+
         if os.path.isfile(self.event_res_tab_file):
             self.event_res_tab = np.load(self.event_res_tab_file)
+            if os.path.isfile(self.event_chi2tab_file):
+                self.event_chi2tab = np.load(self.event_chi2tab_file)
         else:
             self.get_global_lists()
             np.save(self.event_res_tab_file, self.event_res_tab)
+            np.save(self.event_chi2tab_file, self.event_chi2tab)
 
         self.make_shortcuts()
         self.get_xmax_proxy_laws()
-        
 
     def get_xmax_proxy_laws(self):
         evt = self.event_res_tab
@@ -140,23 +149,24 @@ class Layout_dc2:
         self.binned_xmax_z = binned_xmax_z
         self.binned_xmax_z_trigged = binned_xmax_z_trigged
 
-        d2d_max = np.sqrt((evt[:, 17] - evt[:, 5])**2 + (evt[:, 16] - evt[:, 4])**2)
+        d2d_max = np.sqrt((evt[:, 17] - 0*evt[:, 5])**2 + (evt[:, 16] - 0*evt[:, 4])**2)
         binned_dmax = bin_array(evt[:, 2], d2d_max, zen_bins_limits)
         binned_dmax_trigged = bin_array(evt[is_trigged, 2], d2d_max[is_trigged], zen_bins_limits)
 
         self.binned_dmax = binned_dmax
         self.binned_dmax_trigged = binned_dmax_trigged
 
+
     def get_global_lists(self):
 
-       
         global_pos_list = []
         np.random.seed(seed=6578)
 
-        event_res_tab = np.zeros((len(self.event_list), 24)) - 1
+        event_res_tab = np.zeros((len(self.event_list), 50)) - 1
+        event_chi2tab = np.zeros((len(self.event_list), 200)) - 1
 
         for k, ev_id in enumerate(self.event_list[0:]):
-            print('k=', k)
+            print('k=', k, ev_id)
 
             res_file = os.path.join(self.files_dir, '{}.npy'.format(ev_id))
             json_file = os.path.join(self.files_dir, '{}.json'.format(ev_id))
@@ -193,14 +203,18 @@ class Layout_dc2:
             interp_dmax = interp.interp1d(zen_bins_centers, binned_dmax)
 
             core_alt = 1264
-            # corrections de Marion pour DC2 
-            event_res_tab[k, 16] += event_res_tab[k, 4]
-            event_res_tab[k, 17] += event_res_tab[k, 5]
+            
 
-            #shc_z += core_alt
+            arr[:, 1] -= event_res_tab[k, 4]
+            arr[:, 2] -= event_res_tab[k, 5]
             arr[:, 3] += core_alt
 
+            # corrections de Marion pour DC2 
+            #event_res_tab[k, 16] += event_res_tab[k, 4]
+            #event_res_tab[k, 17] += event_res_tab[k, 5]
 
+            #shc_z += core_alt
+            
             ev_du_ids = arr[:, 0]
 
             mask = np.array([i in self.du_names for i in ev_du_ids])
@@ -274,26 +288,40 @@ class Layout_dc2:
                         zeff = xmaxz
 
                         initial_guess = np.array([xeff, yeff, zeff, t_ants.min()])
+                        swf_fit = swf.get_SWF_fit(x_ants, t_ants, initial_guess, sigma_t=self.sigma_timing, ncall=self.ncall)
 
-                        #initial_guess = np.array([event_res_tab[k, 16], event_res_tab[k, 17], event_res_tab[k, 18], t_ants.mean()])
-                      
-                        swf_fit = swf.get_SWF_fit(x_ants, t_ants, initial_guess, sigma_t=self.sigma_timing, cr=1.00)
-                        
+                        initial_guess_v2 = np.array([xeff, yeff, zeff])
+                        swf_fit_v2, valid = swf.get_SWF_fit_v2(x_ants, t_ants, initial_guess_v2, sigma_t=self.sigma_timing, ncall=self.ncall)
+
+                        initial_guess_v3 = np.array([xeff, yeff, zeff])/2
+                        swf_fit_v3, valid = swf.get_SWF_fit_v2(x_ants, t_ants, initial_guess_v3, sigma_t=self.sigma_timing, ncall=self.ncall)
+
+
                         xmax_x = event_res_tab[k, 16]
                         xmax_y = event_res_tab[k, 17]
                         xmax_z = event_res_tab[k, 18]
                         #swf_fit = [xmax_x, xmax_y, xmax_z]
                         print('xmax_x={}, xmax_y={}, xmax_z={}'.format(xmax_x, xmax_y, xmax_z))
                         print(swf_fit)
-                        shc_x = event_res_tab[k, 4]
-                        shc_y = event_res_tab[k, 5]
-                        
+                        shc_x = 0
+                        shc_y = 0
+
                         K_recons_swf = np.array([-swf_fit[0] + shc_x, -swf_fit[1] + shc_y, -swf_fit[2] + core_alt ])
                         K_recons_swf /= np.linalg.norm(K_recons_swf)
                         tt, pp = k_to_theta_phi(K_recons_swf)
+
+                        K_recons_swf_v2 = np.array([-swf_fit_v2[0] + shc_x, -swf_fit_v2[1] + shc_y, -swf_fit_v2[2] + core_alt ])
+                        K_recons_swf_v2 /= np.linalg.norm(K_recons_swf_v2)
+                        tt_v2, pp_v2 = k_to_theta_phi(K_recons_swf_v2)
+
+                        K_recons_swf_v3 = np.array([-swf_fit_v3[0] + shc_x, -swf_fit_v3[1] + shc_y, -swf_fit_v3[2] + core_alt ])
+                        K_recons_swf_v3 /= np.linalg.norm(K_recons_swf_v3)
+                        tt_v3, pp_v3 = k_to_theta_phi(K_recons_swf_v3)
+
                         print('theta_gt={}, phi_gt={}'.format(theta, phi))
-                        print('theta_swf_sim3={}, phi_swf_sim3={}'.format(180/np.pi * tt, 180/np.pi*pp))
+                        print('theta_swf_v2={}, phi_swf_v2={}'.format(180/np.pi * tt_v2, 180/np.pi*pp_v2))
                         print('     ')
+
                         event_res_tab[k, 19] = swf_fit[0]
                         event_res_tab[k, 20] = swf_fit[1]
                         event_res_tab[k, 21] = swf_fit[2]
@@ -301,11 +329,40 @@ class Layout_dc2:
                         event_res_tab[k, 22] = tt * 180/np.pi
                         event_res_tab[k, 23] = pp * 180/np.pi
 
+                        event_res_tab[k, 24] = swf_fit_v2[0]
+                        event_res_tab[k, 25] = swf_fit_v2[1]
+                        event_res_tab[k, 26] = swf_fit_v2[2]
+
+                        event_res_tab[k, 27] = tt_v2 * 180/np.pi
+                        event_res_tab[k, 28] = pp_v2 * 180/np.pi
+
+                        event_res_tab[k, 29] = np.linalg.cond(x_ants[:, 0:2].T @ x_ants[:, 0:2])
+
+                        event_res_tab[k, 30] = xeff
+                        event_res_tab[k, 31] = yeff
+                        event_res_tab[k, 32] = zeff
+
+                        event_res_tab[k, 35] = swf_fit_v3[0]
+                        event_res_tab[k, 36] = swf_fit_v3[1]
+                        event_res_tab[k, 37] = swf_fit_v3[2]
+
+                        event_res_tab[k, 38] = tt_v3 * 180/np.pi
+                        event_res_tab[k, 39] = pp_v3 * 180/np.pi
+
+
+
+                        shc = [shc_x, shc_y, core_alt]
+
+                        
+                        # chi2_tab = []
+                        # for step in range(200):
+                        #     point = shc - step * 1000 * K_recons_swf_v2
+                        #     delta_ctimes = swf.SWF_model_xyz_v2(x_ants.T, *point)
+                        #     chi2 = np.sum((delta_ctimes - c_light  * (t_ants-t_ants[0]))**2)
+                        #     chi2_tab.append(chi2)
+                        # event_chi2tab[k, :] = np.array(chi2_tab)
+
                     global_pos_list.append([x_ants, t_ants])
-
-
-
-
 
                 else:
                     global_pos_list.append(-1)
@@ -314,6 +371,7 @@ class Layout_dc2:
 
             self.global_pos_list = global_pos_list
             self.event_res_tab = event_res_tab
+            self.event_chi2tab = event_chi2tab
 
     def make_shortcuts(self):
 
@@ -330,8 +388,14 @@ class Layout_dc2:
         self.theta_pred = self.event_res_tab[good_ids, 10]
         self.phi_pred = self.event_res_tab[good_ids, 11]
 
-        self.theta_swf = self.event_res_tab[good_ids, 22]
-        self.phi_swf = self.event_res_tab[good_ids, 23]
+        self.theta_swf4d = self.event_res_tab[good_ids, 22]
+        self.phi_swf4d = self.event_res_tab[good_ids, 23]
+
+        self.theta_swf3dv1 = self.event_res_tab[good_ids, 27]
+        self.phi_swf3dv1 = self.event_res_tab[good_ids, 28]
+
+        self.theta_swf3dv2 = self.event_res_tab[good_ids, 38]
+        self.phi_swf3dv2 = self.event_res_tab[good_ids, 39]
 
         self.sig_theta_gt = self.event_res_tab[good_ids, 12]
         self.sig_phi_gt = self.event_res_tab[good_ids, 13]
@@ -344,11 +408,44 @@ class Layout_dc2:
         self.shc_y = self.event_res_tab[good_ids, 5]
         self.d = np.sqrt(self.shc_x**2 + self.shc_y**2)
 
+        self.xmax_x = self.event_res_tab[good_ids, 16]
+        self.xmax_y = self.event_res_tab[good_ids, 17]
+        self.xmax_z = self.event_res_tab[good_ids, 18]
+
+
+        self.dmax = np.sqrt(self.xmax_x**2 + self.xmax_y**2 + (self.xmax_z - self.core_alt)**2)
+
+        self.deff4d = np.sqrt(
+            self.event_res_tab[good_ids, 19]**2 +
+            self.event_res_tab[good_ids, 20]**2 +
+            (self.event_res_tab[good_ids, 21]-self.core_alt)**2
+        )
+
+        self.deff3dv1 = np.sqrt(
+            self.event_res_tab[good_ids, 24]**2 +
+            self.event_res_tab[good_ids, 25]**2 +
+            (self.event_res_tab[good_ids, 26]-self.core_alt)**2
+        )
+
+        self.deff3dv2 = np.sqrt(
+            self.event_res_tab[good_ids, 35]**2 +
+            self.event_res_tab[good_ids, 36]**2 +
+            (self.event_res_tab[good_ids, 37]-self.core_alt)**2
+        )
+
+        
         self.res_phi = self.phi_pred - self.phi_gt
         self.res_theta = self.theta_pred - self.theta_gt
 
-        self.res_phi_swf = self.phi_swf - self.phi_gt
-        self.res_theta_swf = self.theta_swf - self.theta_gt
+        self.res_phi_swf4d = self.phi_swf4d - self.phi_gt
+        self.res_theta_swf4d = self.theta_swf4d - self.theta_gt
+
+        self.res_phi_swf3dv1 = self.phi_swf3dv1 - self.phi_gt
+        self.res_theta_swf3dv1 = self.theta_swf3dv1 - self.theta_gt
+
+        self.res_phi_swf3dv2 = self.phi_swf3dv2 - self.phi_gt
+        self.res_theta_swf3dv2 = self.theta_swf3dv2 - self.theta_gt
+
 
         self.id_good = np.where((np.abs(self.res_phi) < 5)*(np.abs(self.res_theta) < 5))
 
