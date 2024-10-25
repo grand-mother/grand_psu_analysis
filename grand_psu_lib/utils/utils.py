@@ -79,9 +79,36 @@ def get_column_for_given_du_gp13(tadc, request, du_number):
     date_idu = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in gps_ts_du]
     return result, date_idu
 
-
-
 def get_column_for_given_du(tree_, request, du_number):
+    """
+    Function that extract the values of a given column for a given du.
+    Also outputs the corresponding arrays of dates, using the values of the field "gps_time".
+
+    This function aims at working both for tacd "still on disk" (in case of a single file))
+    and the tree_ stored in memory (in case of an concatenated tacd). So there is a test at the beginning
+    """
+    if type(tree_) == uproot.models.TTree.Model_TTree_v20:
+        duid = tree_["du_id"].array()
+        timestamp_array = tree_["gps_time"].array()
+        requested_array = tree_[request].array()
+
+    elif type(tree_) == ak.highlevel.Array:
+        duid = tree_["du_id"]
+        timestamp_array = tree_["gps_time"]
+        requested_array = tree_[request]
+
+    idx_du = (duid == du_number)
+
+    requested_array_du = requested_array[idx_du]
+    idx_dupresent = ak.where(ak.sum(idx_du, axis=1))
+    result = requested_array_du[idx_dupresent]
+
+    timestamp_array_du = timestamp_array.to_numpy()[idx_dupresent]
+    date_array_du = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in timestamp_array_du.squeeze()]
+
+    return result, date_array_du
+
+def get_column_for_given_du_old(tree_, request, du_number):
     """
     Function that extract the values of a given column for a given du.
     Also outputs the corresponding arrays of dates.
@@ -324,7 +351,7 @@ def make_joint_plot4d(
     mean_or_std, du_number,
     plot_filename,
     right_axis_qty=None, date_right_axis_qty=None,
-    right_ylabel=None, tadc_or_voltage='voltage', tz=None):
+    right_ylabel=None, tadc_or_voltage='voltage', tz=None, minutelocator=10):
 
     if mean_or_std == 'mean':
         arr = traces_np.mean(axis=2)
@@ -340,7 +367,7 @@ def make_joint_plot4d(
         ylabel = '{} of each trace [$\mu$V]'.format(mean_or_std)
 
     fig, axs = plt.subplots(figsize=(15, 8))
-    axs.xaxis.set_major_locator(mdates.HourLocator(interval=2, tz=tz))
+    axs.xaxis.set_major_locator(mdates.MinuteLocator(interval=minutelocator, tz=tz))
     axs.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m %Hh%M', tz=tz))
 
     axs.plot(date_trace, arr[:, 0], 'r.', ms=4, label='ch 0')

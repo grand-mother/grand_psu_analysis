@@ -19,8 +19,10 @@ def make_reducedMDdata(input_root_file, output_dir, do_psd_plot=False):
 
     base_input_file = os.path.basename(input_root_file)
 
-    tadc = uproot.concatenate({input_root_file: 'tadc'})
-    trawv = uproot.concatenate({input_root_file: 'trawvoltage'})
+
+    tadc = uproot.open(input_root_file)['tadc']
+    trawv = uproot.open(input_root_file)['trawvoltage']
+
     du_list = utils.get_dulist(tadc)
 
 
@@ -34,16 +36,17 @@ def make_reducedMDdata(input_root_file, output_dir, do_psd_plot=False):
     all_data_alldu = []
 
     for idu in du_list:
+
         all_data = []
-        tp10, d1 = utils.get_column_for_given_du_gp13(tadc, 'trigger_pattern_10s', idu)
+
+        tp10, d1 = utils.get_column_for_given_du(tadc, 'trigger_pattern_10s', idu)
         print('du={}, {} traces, {} are MD'.format(idu, len(tp10), np.sum(tp10)))
-        traces, date_list = utils.get_column_for_given_du_gp13(tadc, 'trace_ch', idu)
+        traces, date_list = utils.get_column_for_given_du(tadc, 'trace_ch', idu)
 
         traces_MD_np = traces.to_numpy()[tp10]
         date_arr = np.array(date_list)[tp10.to_numpy()[:, 0]]
         date_arr = np.expand_dims(date_arr, axis=1)
-
-        gps_temp, d2 = utils.get_column_for_given_du_gp13(trawv, 'gps_temp', idu)
+        gps_temp, d2 = utils.get_column_for_given_du(trawv, 'gps_temp', idu)
         gps_temp = np.array(gps_temp)[tp10.to_numpy()[:, 0]]
 
         du_tab = gps_temp.copy() * 0 + idu
@@ -54,18 +57,25 @@ def make_reducedMDdata(input_root_file, output_dir, do_psd_plot=False):
         all_data.append(traces_MD_np.std(axis=2))
 
         all_data = np.hstack(all_data)
-
         all_data_alldu.append(all_data)
 
+        # make a directory to save the psd plots and psd data
+        os.makedirs(
+            os.path.join(output_dir, base_input_file),
+            exist_ok=True
+            )
+
+        mean_psd = filt.return_psd(traces_MD_np, 500).mean(axis=0)
+
+        mean_psd_filename = os.path.join(
+                output_dir,
+                base_input_file,
+                'mean_psd_du{}.npy'.format(idu)
+            )
+
+        np.save(mean_psd_filename, mean_psd)
+
         if do_psd_plot:
-            # make a directory to save the psd plots and psd data
-            os.makedirs(
-                os.path.join(output_dir, base_input_file),
-                exist_ok=True
-                )
-
-            mean_psd = filt.return_psd(traces_MD_np, 500).mean(axis=0)
-
             plt.figure(idu)
             plt.clf()
             plt.plot(fft_freq, mean_psd[0], label='ch 0 ')
@@ -87,12 +97,7 @@ def make_reducedMDdata(input_root_file, output_dir, do_psd_plot=False):
                 )
             )
             plt.close()
-            mean_psd_filename = os.path.join(
-                output_dir,
-                base_input_file,
-                'mean_psd_du{}.npy'.format(idu)
-            )
-            np.save(mean_psd_filename, mean_psd)
+            
 
         # utils.make_joint_plot4d(traces_MD_np, date_arr, 'mean', idu, './toto_mean_{}.png'.format(idu), tadc_or_voltage='tadc', tz=utils.TZ_GP13())
         # utils.make_joint_plot4d(traces_MD_np, date_arr, 'std', idu, './toto_std_{}.png'.format(idu), tadc_or_voltage='tadc', tz=utils.TZ_GP13())
@@ -102,6 +107,7 @@ def make_reducedMDdata(input_root_file, output_dir, do_psd_plot=False):
     f1_sp = base_input_file.split('_')
     filename = base_input_file + "_reducedMDdata.npy"
     filename = os.path.join(output_dir, filename)
+
     np.save(filename, all_data_alldu)
 
 
@@ -152,4 +158,4 @@ if __name__ == "__main__":
 
     os.makedirs(output_dir, exist_ok=True)
     for file in glob.glob(data_path + glob_pattern):
-        make_reducedMDdata(file, output_dir, do_psd_plot=True)
+        make_reducedMDdata(file, output_dir, do_psd_plot=False)
