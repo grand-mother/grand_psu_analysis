@@ -43,7 +43,7 @@ tp10, d1 = utils.get_column_for_given_du_gp13(tadc, 'trigger_pattern_10s', idu)
 print('du={}, {} traces, {} are MD'.format(idu, len(tp10), np.sum(tp10)))
 traces, date_list = utils.get_column_for_given_du_gp13(tadc, 'trace_ch', idu)
 
-traces_MD_np = traces.to_numpy()[tp10]
+traces_MD_np = traces.to_numpy()[:,0]#[tp10]
 date_arr = np.array(date_list)[tp10.to_numpy()[:, 0]]
 date_arr = np.expand_dims(date_arr, axis=1)
 mean_psd = filt.return_psd(traces_MD_np, 500).mean(axis=0)

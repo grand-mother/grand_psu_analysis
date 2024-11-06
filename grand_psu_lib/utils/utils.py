@@ -104,7 +104,10 @@ def get_column_for_given_du(tree_, request, du_number):
     result = requested_array_du[idx_dupresent]
 
     timestamp_array_du = timestamp_array.to_numpy()[idx_dupresent]
-    date_array_du = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in timestamp_array_du.squeeze()]
+    if len(timestamp_array_du) == 1:
+        date_array_du = [datetime.datetime.fromtimestamp(timestamp_array_du.squeeze(), tz=TZ_GMT())]
+    else:
+        date_array_du = [datetime.datetime.fromtimestamp(dt, tz=TZ_GMT()) for dt in timestamp_array_du.squeeze()]
 
     return result, date_array_du
 
