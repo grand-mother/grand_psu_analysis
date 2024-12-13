@@ -86,7 +86,8 @@ class Layout_dc2:
         do_swf=False,
         ncall=100,
         qty_to_use='ef',
-        n_events=None
+        n_events=None, 
+        timing_method=1
     ):
         self.du_pos_base = du_pos_base
         self.du_names_base = du_names_base
@@ -99,6 +100,7 @@ class Layout_dc2:
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.is_coreas = is_coreas
+        self.timing_method = timing_method
         if output_dir == '':
             self.output_dir = self.input_dir
         self.files_dir = os.path.join(self.input_dir, 'data_files')
@@ -175,9 +177,12 @@ class Layout_dc2:
             print('k=', k, ev_id)
 
             res_file = os.path.join(self.files_dir, '{}.npy'.format(ev_id))
+            res_file_v2 = os.path.join(self.files_dir, '{}_v2.npy'.format(ev_id))
             json_file = os.path.join(self.files_dir, '{}.json'.format(ev_id))
 
             arr = np.load(res_file)
+            arr2 = np.load(res_file_v2)
+            print(arr2.shape)
 
             with open(json_file, 'r') as f:
                 event_params = json.load(f)
@@ -214,42 +219,53 @@ class Layout_dc2:
             arr[:, 2] -= event_res_tab[k, 5]
             arr[:, 3] += core_alt
 
+            arr2[:, 1] -= event_res_tab[k, 4]
+            arr2[:, 2] -= event_res_tab[k, 5]
+            arr2[:, 3] += core_alt
+
             # corrections de Marion pour DC2 
             #event_res_tab[k, 16] += event_res_tab[k, 4]
             #event_res_tab[k, 17] += event_res_tab[k, 5]
 
             #shc_z += core_alt
             
-            ev_du_ids = arr[:, 0]
+            ev_du_ids = arr2[:, 0]
 
             mask = np.array([i in self.du_names for i in ev_du_ids])
 
             ev_du_ids = ev_du_ids[mask]
-            arr = arr[mask]
+            arr2 = arr2[mask]
 
             n_du = len(ev_du_ids)
 
             event_res_tab[k, 8] = n_du
 
             if n_du > 0:
-                ev_du_pos = arr[:, 1:4]
+                ev_du_pos = arr2[:, 1:4]
 
                 if self.qty_to_use == 'ef':
-                    times = arr[:, 4:7]
-                    qty = arr[:, 7:10]
+                    times = arr2[:, 4:8]
+                    qty = arr2[:, 8:12]
                 elif self.qty_to_use == 'tadc':
-                    times = arr[:, 10:13]
-                    qty = arr[:, 13:16]
+                    times = arr2[:, 12:16]
+                    qty = arr2[:, 16:20]
                 else:
-                    times = arr[:, 345:679]
+                    times = arr2[:, 345:679]
+                print(times.shape)
+                print(qty.shape)
+                times = times[:, self.timing_method]
+                qty = qty[:, self.timing_method]
 
-                tmax_3d = times * 1e-9 + np.random.randn(*(times.shape)) * self.sigma_timing * self.do_noise_timing
-                Emax_3d = qty
+                tmax = times * 1e-9 + np.random.randn(*(times.shape)) * self.sigma_timing * self.do_noise_timing 
+                Emax = qty
+                
+                #tmax_3d = times * 1e-9 + np.random.randn(*(times.shape)) * self.sigma_timing * self.do_noise_timing
+                #Emax_3d = qty
 
-                ll = list(np.vstack([np.arange(n_du), np.argmax(Emax_3d, axis=1)]).T)
-                ll = [tuple(l_) for l_ in ll]
-                tmax = np.array([tmax_3d[l_] for l_ in ll])
-                Emax = np.array([Emax_3d[l_] for l_ in ll])
+                # ll = list(np.vstack([np.arange(n_du), np.argmax(Emax_3d, axis=1)]).T)
+                # ll = [tuple(l_) for l_ in ll]
+                # tmax = np.array([tmax_3d[l_] for l_ in ll])
+                # Emax = np.array([Emax_3d[l_] for l_ in ll])
 
                 id_above_threshold = np.where(Emax > self.threshold)[0]
                 n_above_threshold = len(id_above_threshold)

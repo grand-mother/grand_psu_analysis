@@ -44,7 +44,9 @@ gaa_pos_from_du = np.loadtxt(os.path.join('/Users/ab212678/Documents/GRAND/Codes
 
 plt.figure(2)
 plt.clf()
+
 plt.plot(gaa_pos_from_du[:, 1], gaa_pos_from_du[:, 2], 'r.', label='From DU')
+plt.plot(gaa_pos_from_du[:, 1]/57.3*180/np.pi, gaa_pos_from_du[:, 2]/57.3*180/np.pi, 'b.', label='From DU corrected')
 plt.plot(gaa_pos[:, 2], gaa_pos[:, 1], 'k.', label='from AERA file')
 for pos in gaa_pos:
     plt.text(pos[2], pos[1], '{}'.format(int(pos[0])))
@@ -52,7 +54,7 @@ plt.legend()
 plt.xlabel('Longitude [deg]')
 plt.xlabel('Latitude [deg]')
 plt.tight_layout()
-plt.savefig('gaa_position_comp1.png')
+plt.savefig('gaa_position_comp1_corrected.png')
 
 
 

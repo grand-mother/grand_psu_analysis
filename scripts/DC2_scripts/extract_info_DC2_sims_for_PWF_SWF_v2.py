@@ -63,15 +63,24 @@ if __name__ == "__main__":
 
         print('event loaded')
         ev_stuff = []
-
+        ev_stuff_v2 = []
         ev_stuff.append(d1.ev_du_list)
         ev_stuff.append(d1.ev_du_position)
+
+        ev_stuff_v2.append(d1.ev_du_list)
+        ev_stuff_v2.append(d1.ev_du_position)
 
         tmax_ef_l1 = []
         max_ef_l1 = []
 
         tmax_tadc_l1 = []
         max_tadc_l1 = []
+
+        tmax_ef_v2 = []
+        Amax_ef_v2 = []
+        tmax_adc_v2 = []
+        Amax_adc_v2 = []
+
 
 
         for du_id in d1.ev_du_list:
@@ -80,6 +89,30 @@ if __name__ == "__main__":
             ef_l1_Hx = np.abs(hilbert(d1.ev_trace_efield_l1[idu, 0]))
             ef_l1_Hy = np.abs(hilbert(d1.ev_trace_efield_l1[idu, 1]))
             ef_l1_Hz = np.abs(hilbert(d1.ev_trace_efield_l1[idu, 2]))
+
+            norme_ef_xyz = np.sqrt(d1.ev_trace_efield_l1[idu, 0]**2 + d1.ev_trace_efield_l1[idu, 1]**2 + d1.ev_trace_efield_l1[idu, 2]**2)
+            norm_ef_H_xyz = np.abs(hilbert(norme_ef_xyz))
+
+            norme_ef_xy = np.sqrt(d1.ev_trace_efield_l1[idu, 0]**2 + d1.ev_trace_efield_l1[idu, 1]**2)
+            norm_ef_H_xy = np.abs(hilbert(norme_ef_xy))
+
+            norme_H_ef_xyz = np.sqrt(np.abs(hilbert(d1.ev_trace_efield_l1[idu, 0]))**2 + np.abs(hilbert(d1.ev_trace_efield_l1[idu, 1]))**2+np.abs(hilbert(d1.ev_trace_efield_l1[idu, 2]))**2) 
+            norme_H_ef_xy = np.sqrt(np.abs(hilbert(d1.ev_trace_efield_l1[idu, 0]))**2 + np.abs(hilbert(d1.ev_trace_efield_l1[idu, 1]))**2)
+
+            imax_norm_ef_H_xyz = np.argmax(norm_ef_H_xyz)
+            imax_norm_ef_H_xy = np.argmax(norm_ef_H_xy)
+            imax_norme_H_ef_xyz = np.argmax(norme_H_ef_xyz)
+            imax_norme_H_ef_xy = np.argmax(norme_H_ef_xy)
+
+            tmax_norm_ef_H_xyz = d1.ev_trace_efield_l1_time[imax_norm_ef_H_xyz] + d1.ev_t0_efield_l1[idu]
+            tmax_norm_ef_H_xy = d1.ev_trace_efield_l1_time[imax_norm_ef_H_xy] + d1.ev_t0_efield_l1[idu]
+            tmax_norme_H_ef_xyz = d1.ev_trace_efield_l1_time[imax_norme_H_ef_xyz] + d1.ev_t0_efield_l1[idu]
+            tmax_norme_H_ef_xy = d1.ev_trace_efield_l1_time[imax_norme_H_ef_xy] + d1.ev_t0_efield_l1[idu]
+
+            Emax_norm_ef_H_xyz = norm_ef_H_xyz[imax_norm_ef_H_xyz]
+            Emax_norm_ef_H_xy = norm_ef_H_xy[imax_norm_ef_H_xy]
+            Emax_norme_H_ef_xyz = norm_ef_H_xyz[imax_norme_H_ef_xyz]
+            Emax_norme_H_ef_xy = norme_H_ef_xy[imax_norme_H_ef_xy]
 
             imax_ef_l1_Hx = np.argmax(ef_l1_Hx)
             imax_ef_l1_Hy = np.argmax(ef_l1_Hy)
@@ -95,6 +128,9 @@ if __name__ == "__main__":
 
             tmax_ef_l1.append([tmax_ef_l1_Hx, tmax_ef_l1_Hy, tmax_ef_l1_Hz])
             max_ef_l1.append([Emax_ef_l1_Hx, Emax_ef_l1_Hy, Emax_ef_l1_Hz])
+
+            tmax_ef_v2.append([tmax_norm_ef_H_xyz, tmax_norm_ef_H_xy, tmax_norme_H_ef_xyz, tmax_norme_H_ef_xy])
+            Amax_ef_v2.append([Emax_norm_ef_H_xyz, Emax_norm_ef_H_xy, Emax_norme_H_ef_xyz, Emax_norme_H_ef_xy])
 
             ### tadc L1
             tadc_l1_Hx = np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 0]))
@@ -116,12 +152,44 @@ if __name__ == "__main__":
             tmax_tadc_l1.append([tmax_tadc_l1_Hx, tmax_tadc_l1_Hy, tmax_tadc_l1_Hz])
             max_tadc_l1.append([Emax_tadc_l1_Hx, Emax_tadc_l1_Hy, Emax_tadc_l1_Hz])
 
+            norme_adc_xyz = np.sqrt(d1.ev_trace_ADC_l1[idu, 0]**2 + d1.ev_trace_ADC_l1[idu, 1]**2 + d1.ev_trace_ADC_l1[idu, 2]**2)
+            norm_adc_H_xyz = np.abs(hilbert(norme_adc_xyz))
+
+            norme_adc_xy = np.sqrt(d1.ev_trace_ADC_l1[idu, 0]**2 + d1.ev_trace_ADC_l1[idu, 1]**2)
+            norm_adc_H_xy = np.abs(hilbert(norme_adc_xy))
+
+            norme_H_adc_xyz = np.sqrt(np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 0]))**2 + np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 1]))**2+np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 2]))**2) 
+            norme_H_adc_xy = np.sqrt(np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 0]))**2 + np.abs(hilbert(d1.ev_trace_ADC_l1[idu, 1]))**2)
+
+            imax_norm_adc_H_xyz = np.argmax(norm_adc_H_xyz)
+            imax_norm_adc_H_xy = np.argmax(norm_adc_H_xy)
+            imax_norme_H_adc_xyz = np.argmax(norme_H_adc_xyz)
+            imax_norme_H_adc_xy = np.argmax(norme_H_adc_xy)
+
+            tmax_norm_adc_H_xyz = d1.ev_trace_ADC_l1_time[imax_norm_adc_H_xyz] + d1.ev_t0_adc_l1[idu]
+            tmax_norm_adc_H_xy = d1.ev_trace_ADC_l1_time[imax_norm_adc_H_xy] + d1.ev_t0_adc_l1[idu]
+            tmax_norme_H_adc_xyz = d1.ev_trace_ADC_l1_time[imax_norme_H_adc_xyz] + d1.ev_t0_adc_l1[idu]
+            tmax_norme_H_adc_xy = d1.ev_trace_ADC_l1_time[imax_norme_H_adc_xy] + d1.ev_t0_adc_l1[idu]
+
+            Emax_norm_adc_H_xyz = norm_adc_H_xyz[imax_norm_adc_H_xyz]
+            Emax_norm_adc_H_xy = norm_adc_H_xy[imax_norm_adc_H_xy]
+            Emax_norme_H_adc_xyz = norm_adc_H_xyz[imax_norme_H_adc_xyz]
+            Emax_norme_H_adc_xy = norme_H_adc_xy[imax_norme_H_adc_xy]
+
+            tmax_adc_v2.append([tmax_norm_adc_H_xyz, tmax_norm_adc_H_xy, tmax_norme_H_adc_xyz, tmax_norme_H_adc_xy])
+            Amax_adc_v2.append([Emax_norm_adc_H_xyz, Emax_norm_adc_H_xy, Emax_norme_H_adc_xyz, Emax_norme_H_adc_xy])
 
 
         ev_stuff.append(np.array(tmax_ef_l1))
         ev_stuff.append(np.array(max_ef_l1))
         ev_stuff.append(np.array(tmax_tadc_l1))
         ev_stuff.append(np.array(max_tadc_l1))
+
+        ev_stuff_v2.append(np.array(tmax_ef_v2))
+        ev_stuff_v2.append(np.array(Amax_ef_v2))
+        ev_stuff_v2.append(np.array(tmax_adc_v2))
+        ev_stuff_v2.append(np.array(Amax_adc_v2))
+
 
         ev_stuff_arr = np.hstack([
             np.expand_dims(ev_stuff[0], 1),  # ev_du_list
@@ -131,6 +199,15 @@ if __name__ == "__main__":
             ev_stuff[4],  # tmax_tadc_l1
             ev_stuff[5]   # max_tadc_l1
         ])
+        ev_stuff_arr_v2 = np.hstack([
+            np.expand_dims(ev_stuff_v2[0], 1),  # ev_du_list
+            ev_stuff_v2[1],  # ev_du_position
+            ev_stuff_v2[2], # tmaxs ef
+            ev_stuff_v2[3],  #Emaxs ef
+            ev_stuff_v2[4], # tmaxs adc
+            ev_stuff_v2[5], # Amax adc
+        ])
+
 
         json_file = os.path.join(output_path, '{}.json'.format(d1.event_params["event_number"]))
         with open(json_file, 'w') as f:
@@ -139,8 +216,10 @@ if __name__ == "__main__":
         arr_file = os.path.join(output_path, '{}.npy'.format(d1.event_params["event_number"]))
         np.save(arr_file, ev_stuff_arr)
 
+        arr_file_v2 = os.path.join(output_path, '{}_v2.npy'.format(d1.event_params["event_number"]))
+        np.save(arr_file_v2, ev_stuff_arr_v2)
         # sometimes do some plots
-        if np.random.rand(1) < 0.005:
+        if np.random.rand(1) < 0.0005:
             fig, ax = plt.subplots(1, 1)
             sc = ax.scatter(-ev_stuff[1][:, 1], ev_stuff[1][:, 0], c=ev_stuff[3].max(axis=1))
             ax.set_ylabel('Northing [m]')

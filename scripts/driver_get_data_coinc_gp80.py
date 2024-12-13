@@ -1,35 +1,20 @@
 import os
 import utils_recons_gp80 as ur80
+import glob
 
+
+''' Scripts that extract the coincidence and does the recons for the beacon tests of nov 1st and nov 2nd to study the time offset
+'''
 
 
 data_path = '/Users/ab212678/Documents/GRAND/data/gp13/2024/11/'
-filename = 'GP13_20240914_055602_RUN0914_UD_RAW_ChanXYZ_20dB_10Hz_75MHz_BeaconTest_001_dat.root'
-#filename = 'GP13_20241031_105925_RUN127_UD_RAW_ChanXYZ_20dB_10DUs_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_001.root'
-#filename = 'GP13_20241031_110536_RUN127_UD_RAW_ChanXYZ_20dB_10DUs_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_001.root'
-#filename = 'GP13_20241031_133926_RUN127_UD_RAW_ChanXYZ_20dB_10DUs_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_001.root'
-#filename = 'GP13_20241031_141202_RUN127_MD_RAW_ChanXYZ_20dB_GP80_33DUs_10s_001.root'
-#filename = 'GP13_20241031_142534_RUN127_UD_RAW_ChanXYZ_20dB_33DUs_GP80_XorY_Y2FLOAT_X2Z_DunhuangTEST_001.root'
 
-filename = 'GP13_20241101_085611_RUN127_UD_RAW_ChanXYZ_20dB_10DUsandDU34_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_003.root'
-filename = 'GP13_20241101_091355_RUN127_UD_RAW_ChanXYZ_20dB_10DUsandDU34_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point2_001.root'
-filename = 'GP13_20241101_085959_RUN127_UD_RAW_ChanXYZ_20dB_10DUsandDU34_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_004.root'
-filename = 'GP13_20241101_045020_RUN127_MD_RAW_ChanXYZ_20dB_10DUsandDU34_GP13_XorY_Y2FLOAT_X2Z_20hz_MoverBeaconDunhuangTEST_001.root'
-filename = 'GP13_20241101_102519_RUN127_UD_RAW_ChanXYZ_20dB_10DUsandDU34_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point5_007.root'
-filename = 'GP13_20241101_102358_RUN127_UD_RAW_ChanXYZ_20dB_10DUsandDU34_GP13_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point5_003.root'
-filename = 'GP13_20241101_122938_RUN127_UD_RAW_ChanXYZ_20dB_36DUs_GP80_XorY_Y2FLOAT_X2Z_DunhuangTEST_037.root'
-filename = 'GP13_20241102_031714_RUN127_UD_RAW_ChanXYZ_20dB_35DUs_GP65_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point1_direction1_direction2_003.root'
-filename = 'GP13_20241102_045506_RUN127_UD_RAW_ChanXYZ_20dB_35DUs_GP65_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point4_direction2_001.root'
-#filename = 'GP13_20241102_062650_RUN127_UD_RAW_ChanXYZ_20dB_35DUs_GP65_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point6_direction2_004.root'
-#filename = 'GP13_20241102_060503_RUN127_UD_RAW_ChanXYZ_20dB_35DUs_GP65_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point5_direction3_006.root'
-#filename = 'GP13_20241102_062733_RUN127_UD_RAW_ChanXYZ_20dB_35DUs_GP65_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point6_direction2_006.root'
-#filename = 'GP13_20241102_062353_RUN127_UD_RAW_ChanXYZ_20dB_35DUs_GP65_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point6_direction1_005.root'
-#filename = 'GP13_20241102_062320_RUN127_UD_RAW_ChanXYZ_20dB_35DUs_GP65_XorY_Y2FLOAT_X2Z_MoverBeaconDunhuangTEST_Point6_direction1_003.root'
-#flist = glob.glob(data_path + '/GP13_20241028*UD*')
-#print(flist)
-#for fname in flist[0,]:
-#    coincs = find_coincs_in_udfile(fname)
+output_dir = '/Users/ab212678/Documents/GRAND/data/gp13/study_timedelays_GP13_11DU*7CD_gps_status_flag/'
 
-fname = os.path.join(data_path, filename)
-coincs, geo_info_xyz = ur80.find_coincs_in_udfile(fname, 4, do_plots=True)
-ur80.get_data_from_coincs(coincs, geo_info_xyz, fname)
+file_list = glob.glob(data_path + 'GP13_20241101*11DU*Mover*Point[2-7]*.root')
+
+for fname in file_list:
+
+    coincs, geo_info_xyz = ur80.find_coincs_in_udfile_withvalid_du34(fname, 7, do_plots=True)
+    if len(coincs) > 0:
+        ur80.get_data_from_coincs_beacon(coincs, geo_info_xyz, fname, output_dir=output_dir, do_recons=True)
