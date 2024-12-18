@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
             Emax_norm_ef_H_xyz = norm_ef_H_xyz[imax_norm_ef_H_xyz]
             Emax_norm_ef_H_xy = norm_ef_H_xy[imax_norm_ef_H_xy]
-            Emax_norme_H_ef_xyz = norm_ef_H_xyz[imax_norme_H_ef_xyz]
+            Emax_norme_H_ef_xyz = norme_H_ef_xyz[imax_norme_H_ef_xyz]
             Emax_norme_H_ef_xy = norme_H_ef_xy[imax_norme_H_ef_xy]
 
             imax_ef_l1_Hx = np.argmax(ef_l1_Hx)
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
             Emax_norm_adc_H_xyz = norm_adc_H_xyz[imax_norm_adc_H_xyz]
             Emax_norm_adc_H_xy = norm_adc_H_xy[imax_norm_adc_H_xy]
-            Emax_norme_H_adc_xyz = norm_adc_H_xyz[imax_norme_H_adc_xyz]
+            Emax_norme_H_adc_xyz = norme_H_adc_xyz[imax_norme_H_adc_xyz]
             Emax_norme_H_adc_xy = norme_H_adc_xy[imax_norme_H_adc_xy]
 
             tmax_adc_v2.append([tmax_norm_adc_H_xyz, tmax_norm_adc_H_xy, tmax_norme_H_adc_xyz, tmax_norme_H_adc_xy])
